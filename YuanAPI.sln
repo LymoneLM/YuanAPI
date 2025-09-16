@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36221.1 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YuanAPI", "YuanAPI.csproj", "{FEF0F33E-E9A0-4B80-A916-C5D09A13A016}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FEF0F33E-E9A0-4B80-A916-C5D09A13A016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEF0F33E-E9A0-4B80-A916-C5D09A13A016}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEF0F33E-E9A0-4B80-A916-C5D09A13A016}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEF0F33E-E9A0-4B80-A916-C5D09A13A016}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2CA68AAB-78DA-46F6-9920-F78B5C149992}
+	EndGlobalSection
+EndGlobal
