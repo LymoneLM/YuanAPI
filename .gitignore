@@ -1,6 +1,8 @@
+# Ignore IDE files
 .idea
-.libs
 .vs
-bin
-obj
-Properties
+# Ignore in-game library files
+Libs
+# Ignore build output directories
+**/bin
+**/obj
