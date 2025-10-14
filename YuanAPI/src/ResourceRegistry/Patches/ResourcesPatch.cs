@@ -5,69 +5,79 @@ using HarmonyLib;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace YuanAPI.Patches {
-    //Loading custom resources
-    [HarmonyPatch]
-    static class ResourcesPatch {
-        [HarmonyPatch(typeof(Resources), "Load", typeof(string), typeof(Type))]
-        [HarmonyPrefix]
-        public static bool Prefix(ref string path, Type systemTypeInstance, ref Object __result) {
-            foreach (ResourceData resource in ResourceRegistry.modResources) {
-                if (!path.Contains(resource.keyWord) || !resource.HasAssetBundle())
-                    continue;
+namespace YuanAPI.Patches;
 
-                if (resource.bundle.Contains(path + ".prefab") && systemTypeInstance == typeof(GameObject)) {
-                    Object myPrefab = resource.bundle.LoadAsset(path + ".prefab");
-                    YuanAPI.logger.LogDebug($"Loading registered asset {path}: {(myPrefab != null ? "Success" : "Failure")}");
+//Loading custom resources
+[HarmonyPatch]
+static class ResourcesPatch
+{
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Resources), "Load", typeof(string), typeof(Type))]
+    public static bool Prefix(ref string path, Type systemTypeInstance, ref Object __result)
+    {
+        foreach (ResourceData resource in ResourceRegistry.modResources)
+        {
+            if (!path.Contains(resource.keyWord) || !resource.HasAssetBundle())
+                continue;
 
-                    if (!ProtoRegistry.modelMats.ContainsKey(path)) {
-                        __result = myPrefab;
-                        return false;
-                    }
+            if (resource.bundle.Contains(path + ".prefab") && systemTypeInstance == typeof(GameObject))
+            {
+                Object myPrefab = resource.bundle.LoadAsset(path + ".prefab");
+                YuanAPI.logger.LogDebug($"Loading registered asset {path}: {(myPrefab != null ? "Success" : "Failure")}");
 
-                    LodMaterials mats = ProtoRegistry.modelMats[path];
-                    if (myPrefab != null && mats.HasLod(0)) {
-                        MeshRenderer[] renderers = ((GameObject)myPrefab).GetComponentsInChildren<MeshRenderer>();
-                        foreach (MeshRenderer renderer in renderers) {
-                            Material[] newMats = new Material[renderer.sharedMaterials.Length];
-                            for (int i = 0; i < newMats.Length; i++) {
-                                newMats[i] = mats[0][i];
-                            }
-
-                            renderer.sharedMaterials = newMats;
-                        }
-                    }
-
+                if (!ProtoRegistry.modelMats.ContainsKey(path))
+                {
                     __result = myPrefab;
                     return false;
                 }
 
-                foreach (string extension in ProtoRegistry.spriteFileExtensions) {
-                    if (!resource.bundle.Contains(path + extension))
-                        continue;
+                LodMaterials mats = ProtoRegistry.modelMats[path];
+                if (myPrefab != null && mats.HasLod(0))
+                {
+                    MeshRenderer[] renderers = ((GameObject)myPrefab).GetComponentsInChildren<MeshRenderer>();
+                    foreach (MeshRenderer renderer in renderers)
+                    {
+                        Material[] newMats = new Material[renderer.sharedMaterials.Length];
+                        for (int i = 0; i < newMats.Length; i++)
+                        {
+                            newMats[i] = mats[0][i];
+                        }
 
-                    Object mySprite = resource.bundle.LoadAsset(path + extension, systemTypeInstance);
-
-                    CommonAPIPlugin.logger.LogDebug($"Loading registered asset {path}: {(mySprite != null ? "Success" : "Failure")}");
-
-                    __result = mySprite;
-                    return false;
+                        renderer.sharedMaterials = newMats;
+                    }
                 }
 
-                foreach (string extension in ProtoRegistry.audioClipFileExtensions) {
-                    if (!resource.bundle.Contains(path + extension))
-                        continue;
-
-                    Object myAudioClip = resource.bundle.LoadAsset(path + extension, systemTypeInstance);
-
-                    CommonAPIPlugin.logger.LogDebug($"Loading registered asset {path}: {(myAudioClip != null ? "Success" : "Failure")}");
-
-                    __result = myAudioClip;
-                    return false;
-                }
+                __result = myPrefab;
+                return false;
             }
 
-            return true;
+            foreach (string extension in ProtoRegistry.spriteFileExtensions)
+            {
+                if (!resource.bundle.Contains(path + extension))
+                    continue;
+
+                Object mySprite = resource.bundle.LoadAsset(path + extension, systemTypeInstance);
+
+                CommonAPIPlugin.logger.LogDebug($"Loading registered asset {path}: {(mySprite != null ? "Success" : "Failure")}");
+
+                __result = mySprite;
+                return false;
+            }
+
+            foreach (string extension in ProtoRegistry.audioClipFileExtensions)
+            {
+                if (!resource.bundle.Contains(path + extension))
+                    continue;
+
+                Object myAudioClip = resource.bundle.LoadAsset(path + extension, systemTypeInstance);
+
+                CommonAPIPlugin.logger.LogDebug($"Loading registered asset {path}: {(myAudioClip != null ? "Success" : "Failure")}");
+
+                __result = myAudioClip;
+                return false;
+            }
         }
+
+        return true;
     }
 }

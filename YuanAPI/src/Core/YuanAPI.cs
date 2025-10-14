@@ -6,48 +6,42 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace YuanAPI
+namespace YuanAPI;
+/// <summary>
+/// Plugin class of Yuan API. Entry point
+/// </summary>
+[BepInPlugin(MODGUID, MODNAME, VERSION)]
+public class YuanAPI : BaseUnityPlugin
 {
-    /// <summary>
-    /// Plugin class of Yuan API. Entry point
-    /// </summary>
-    [BepInPlugin(MODGUID, MODNAME, VERSION)]
-    public class YuanAPI : BaseUnityPlugin
+    public const string MODNAME = "NewItemTest";
+    public const string MODGUID = "cc.lymone.HoL." + MODNAME;
+    public const string VERSION = "0.1.0";
+
+    internal static Harmony harmony;
+    internal static IYuanLogger logger;
+    internal static ResourceData resource;
+    internal static HashSet<string> LoadedSubmodules;
+
+    public static readonly Version buildFor = new Version(0, 7, 851);
+    public static readonly Version version = Version.Parse(VERSION);
+
+    private void Awake()
     {
-        public const string MODNAME = "NewItemTest";
-        public const string MODGUID = "cc.lymone.HoL." + MODNAME;
-        public const string VERSION = "0.1.0";
+        logger = new LoggerWrapper(Logger);
+        YuanLogger.SetLogger(logger);
 
-        internal static Harmony harmony;
-        internal static IYuanLogger logger;
-        internal static ResourceData resource;
-        internal static HashSet<string> LoadedSubmodules;
-        internal static APISubmoduleHandler submoduleHandler;
+        harmony = new Harmony(MODGUID);
 
-        public static readonly Version buildFor = new Version(0,7, 851);
-        public static readonly Version version = Version.Parse(VERSION);
+    }
 
-        private void Awake()
-        {
-            logger = new LoggerWrapper(Logger);
-            YuanLogger.SetLogger(logger);
+    private void Start()
+    {
 
-            harmony = new Harmony(MODGUID);
+    }
 
-            var pluginScanner = new PluginScanner();
-            submoduleHandler = new APISubmoduleHandler(buildFor, Logger);
-            LoadedSubmodules = submoduleHandler.LoadRequested(pluginScanner);
-            pluginScanner.ScanPlugins();
-        }
+    private void Patch()
+    {
 
-        private void Start()
-        {
-
-        }
-
-        private void Patch()
-        {
-
-        } 
     }
 }
+
