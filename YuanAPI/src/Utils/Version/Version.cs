@@ -61,6 +61,28 @@ namespace YuanAPI {
         }
 
         /// <summary>
+        /// 从字符串初始化一个新的SemVer版本号
+        /// </summary>
+        /// <param name="versionString">版本字符串</param>
+        /// <exception cref="ArgumentException">当版本号参数无效时抛出</exception>
+        public Version(string versionString) {
+            if (string.IsNullOrWhiteSpace(versionString))
+                throw new ArgumentException("Version string cannot be null or empty", nameof(versionString));
+
+            // 使用正则表达式进行严格解析
+            var match = SemVerRegex.Match(versionString);
+            if (match.Success) {
+                Major = int.Parse(match.Groups["major"].Value);
+                Minor = int.Parse(match.Groups["minor"].Value);
+                Patch = int.Parse(match.Groups["patch"].Value);
+                PreRelease = match.Groups["prerelease"].Success ? match.Groups["prerelease"].Value : null;
+                BuildMetadata = match.Groups["buildmetadata"].Success ? match.Groups["buildmetadata"].Value : null;
+            }
+
+            throw new ArgumentException("Version string is not SemVer Version", nameof(versionString));
+        }
+
+        /// <summary>
         /// 从字符串解析SemVer版本号
         /// </summary>
         /// <param name="versionString">版本字符串</param>
