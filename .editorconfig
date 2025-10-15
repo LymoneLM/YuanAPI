@@ -21,3 +21,6 @@ dotnet_style_prefer_auto_properties = true:silent
 dotnet_diagnostic.CS8604.severity = suggestion
 # CS8602: Dereference of a possibly null reference.
 dotnet_diagnostic.CS8602.severity = suggestion
+
+# IDE0044: 添加只读修饰符
+dotnet_diagnostic.IDE0044.severity = silent

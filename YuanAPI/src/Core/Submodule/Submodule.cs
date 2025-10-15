@@ -23,8 +23,10 @@ internal class NoNeedLoad : Attribute { }
 internal static class SubmoduleManager
 {
     private static bool _isInitialized = false;
-    private static Harmony harmony = new Harmony(YuanAPI.MODGUID+".Submodule");
-    private static Dictionary<MethodBase, Action> hookDelegates = new Dictionary<MethodBase, Action>();
+    private static Harmony _harmony = new Harmony(YuanAPI.MODGUID+".Submodule");
+
+    private static Dictionary<MethodBase, Action> _hookDelegates = new Dictionary<MethodBase, Action>();
+    internal static HashSet<string> HasLoaded = []; 
 
     static SubmoduleManager()
     {
@@ -67,17 +69,21 @@ internal static class SubmoduleManager
             .Where(m => !m.IsSpecialName) // 排除属性访问器等
             .Where(m => m.DeclaringType == type)
             .Where(m => m.GetCustomAttribute<NoNeedLoad>() == null)
+            .Where(m => m.Name != "SetHooks")
             .ToList();
+
+        var setHooksPostfix = typeof(SetHooksPatch).GetMethod("SetHooksPostfix");
+        _harmony.Patch(setHooksMethod, postfix: new HarmonyMethod(setHooksPostfix));
 
         foreach (var method in methods)
         {
             // 创建高性能委托
             var hookDelegate = CreateHookDelegate(setHooksMethod);
-            hookDelegates[method] = hookDelegate;
+            _hookDelegates[method] = hookDelegate;
 
             // 使用通用补丁
-            var patchMethod = typeof(HookPatches).GetMethod("Prefix");
-            harmony.Patch(method, prefix: new HarmonyMethod(patchMethod));
+            var patchMethod = typeof(SetHooksPatch).GetMethod("MethodPrefix");
+            _harmony.Patch(method, prefix: new HarmonyMethod(patchMethod));
 
             YuanLogger.logger.LogDebug($"Patched: {type.Name}.{method.Name}");
         }
@@ -103,21 +109,37 @@ internal static class SubmoduleManager
 
     public static bool TryGetHookDelegate(MethodBase method, out Action hookDelegate)
     {
-        return hookDelegates.TryGetValue(method, out hookDelegate);
+        return _hookDelegates.TryGetValue(method, out hookDelegate);
     }
 }
 
 // Harmony补丁类
 [HarmonyPatch]
-public static class HookPatches
+public static class SetHooksPatch
 {
-    public static bool Prefix(MethodBase __originalMethod)
+    public static bool MethodPrefix(MethodBase __originalMethod)
     {
-        if (SubmoduleManager.TryGetHookDelegate(__originalMethod, out var hookDelegate))
+        if (__originalMethod?.DeclaringType != null)
+        {
+            var className = __originalMethod.DeclaringType.FullName;
+            if (SubmoduleManager.HasLoaded.Contains(className))
+                return false;
+        }
+
+        if (SubmoduleManager.TryGetHookDelegate(__originalMethod!, out var hookDelegate))
         {
             hookDelegate();
         }
 
         return true;
+    }
+
+    public static void SetHooksPostfix(MethodBase __originalMethod)
+    {
+        if (__originalMethod?.DeclaringType != null)
+        {
+            var className = __originalMethod.DeclaringType.FullName;
+            SubmoduleManager.HasLoaded.Add(className);
+        }
     }
 }
