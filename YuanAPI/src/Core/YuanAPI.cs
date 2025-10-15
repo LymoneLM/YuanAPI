@@ -18,16 +18,14 @@ public class YuanAPI : BaseUnityPlugin
     public const string MODGUID = "cc.lymone.HoL." + MODNAME;
     public const string VERSION = "0.1.0";
 
-    internal static Harmony harmony = new Harmony(MODGUID);
-    internal static IYuanLogger logger;
+    internal static Harmony Harmony = new Harmony(MODGUID);
 
-    public static readonly Version buildFor = new Version(0, 7, 851);
-    public static readonly Version version = Version.Parse(VERSION);
+    public static readonly Version BuildFor = new Version(0, 7, 851);
+    public static readonly Version Version = Version.Parse(VERSION);
 
     private void Awake()
     {
-        logger = new LoggerWrapper(Logger);
-        YuanLogger.SetLogger(logger);
+        YuanLogger.SetLogger(new LoggerWrapper(Logger));
 
 
     }

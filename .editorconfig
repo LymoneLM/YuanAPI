@@ -1,6 +1,13 @@
-﻿[*.cs]
+﻿# 顶层设置
+root = true
+
+[*.cs]
+charset = utf-8
 indent_style = space
 indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
 
 csharp_style_namespace_declarations = file_scoped:error
 # IDE0161: 使用以文件为作用域的命名空间

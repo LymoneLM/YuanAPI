@@ -6,9 +6,9 @@ using UnityEngine;
 namespace YuanAPI;
 public class ResourceData
 {
-    public string modId;
-    public string modPath;
-    public string keyWord;
+    public string ModId;
+    public string ModPath;
+    public string KeyWord;
 
     public AssetBundle bundle;
 
@@ -20,9 +20,9 @@ public class ResourceData
     /// <param name="modPath">Path to mod's main assembly</param>
     public ResourceData(string modId, string keyWord, string modPath)
     {
-        this.modId = modId;
-        this.modPath = modPath;
-        this.keyWord = keyWord;
+        this.ModId = modId;
+        this.ModPath = modPath;
+        this.KeyWord = keyWord;
     }
 
     /// <summary>
@@ -32,13 +32,13 @@ public class ResourceData
     /// <param name="keyWord">Unique Keyword used only by your mods</param>
     public ResourceData(string modId, string keyWord)
     {
-        this.modId = modId;
-        this.modPath = Path.GetDirectoryName(Assembly.GetCallingAssembly().Location);
-        this.keyWord = keyWord;
+        this.ModId = modId;
+        this.ModPath = Path.GetDirectoryName(Assembly.GetCallingAssembly().Location);
+        this.KeyWord = keyWord;
     }
 
     /// <summary>
-    /// Does this resource definition have a asset bundle loaded
+    /// Does this resource definition have an asset bundle loaded
     /// </summary>
     public bool HasAssetBundle()
     {
@@ -52,10 +52,10 @@ public class ResourceData
     /// <exception cref="LoadException">Thrown if loading an asset bundle has failed</exception>
     public void LoadAssetBundle(string bundleName)
     {
-        bundle = AssetBundle.LoadFromFile($"{modPath}/{bundleName}");
+        bundle = AssetBundle.LoadFromFile($"{ModPath}/{bundleName}");
         if (bundle == null)
         {
-            throw new LoadException($"Failed to load asset bundle at {modPath}/{bundleName}");
+            throw new LoadException($"Failed to load asset bundle at {ModPath}/{bundleName}");
         }
     }
 }

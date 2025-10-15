@@ -9,69 +9,51 @@ namespace YuanAPI.Patches;
 
 //Loading custom resources
 [HarmonyPatch]
-static class ResourcesPatch
+public static class ResourcesPatch
 {
     [HarmonyPrefix]
     [HarmonyPatch(typeof(Resources), "Load", typeof(string), typeof(Type))]
-    public static bool Prefix(ref string path, Type systemTypeInstance, ref Object __result)
+    public static bool Prefix(ref string path, Type systemTypeInstance, ref Object __result, bool __runOriginal)
     {
-        foreach (ResourceData resource in ResourceRegistry.modResources)
+        if (!__runOriginal)
+            return false;
+
+        foreach (ResourceData resource in ResourceRegistry.ModResources)
         {
-            if (!path.Contains(resource.keyWord) || !resource.HasAssetBundle())
+            
+            if (!path.Contains(resource.KeyWord) || !resource.HasAssetBundle())
                 continue;
 
             if (resource.bundle.Contains(path + ".prefab") && systemTypeInstance == typeof(GameObject))
             {
                 Object myPrefab = resource.bundle.LoadAsset(path + ".prefab");
-                YuanAPI.logger.LogDebug($"Loading registered asset {path}: {(myPrefab != null ? "Success" : "Failure")}");
-
-                if (!ProtoRegistry.modelMats.ContainsKey(path))
-                {
-                    __result = myPrefab;
-                    return false;
-                }
-
-                LodMaterials mats = ProtoRegistry.modelMats[path];
-                if (myPrefab != null && mats.HasLod(0))
-                {
-                    MeshRenderer[] renderers = ((GameObject)myPrefab).GetComponentsInChildren<MeshRenderer>();
-                    foreach (MeshRenderer renderer in renderers)
-                    {
-                        Material[] newMats = new Material[renderer.sharedMaterials.Length];
-                        for (int i = 0; i < newMats.Length; i++)
-                        {
-                            newMats[i] = mats[0][i];
-                        }
-
-                        renderer.sharedMaterials = newMats;
-                    }
-                }
+                YuanLogger.logger.LogDebug($"Loading registered asset {path}: {(myPrefab != null ? "Success" : "Failure")}");
 
                 __result = myPrefab;
                 return false;
             }
 
-            foreach (string extension in ProtoRegistry.spriteFileExtensions)
+            foreach (string extension in ResourceRegistry.SpriteFileExtensions)
             {
                 if (!resource.bundle.Contains(path + extension))
                     continue;
 
                 Object mySprite = resource.bundle.LoadAsset(path + extension, systemTypeInstance);
 
-                CommonAPIPlugin.logger.LogDebug($"Loading registered asset {path}: {(mySprite != null ? "Success" : "Failure")}");
+                YuanLogger.logger.LogDebug($"Loading registered asset {path}: {(mySprite != null ? "Success" : "Failure")}");
 
                 __result = mySprite;
                 return false;
             }
 
-            foreach (string extension in ProtoRegistry.audioClipFileExtensions)
+            foreach (string extension in ResourceRegistry.AudioClipFileExtensions)
             {
                 if (!resource.bundle.Contains(path + extension))
                     continue;
 
                 Object myAudioClip = resource.bundle.LoadAsset(path + extension, systemTypeInstance);
 
-                CommonAPIPlugin.logger.LogDebug($"Loading registered asset {path}: {(myAudioClip != null ? "Success" : "Failure")}");
+                YuanLogger.logger.LogDebug($"Loading registered asset {path}: {(myAudioClip != null ? "Success" : "Failure")}");
 
                 __result = myAudioClip;
                 return false;
