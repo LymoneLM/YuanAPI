@@ -72,6 +72,9 @@ internal static class SubmoduleManager
             .Where(m => m.Name != "SetHooks")
             .ToList();
 
+        var setHooksPrefix = typeof(SetHooksPatch).GetMethod("SetHooksPrefix");
+        _harmony.Patch(setHooksMethod, prefix: new HarmonyMethod(setHooksPrefix));
+
         var setHooksPostfix = typeof(SetHooksPatch).GetMethod("SetHooksPostfix");
         _harmony.Patch(setHooksMethod, postfix: new HarmonyMethod(setHooksPostfix));
 
@@ -119,13 +122,6 @@ public static class SetHooksPatch
 {
     public static bool MethodPrefix(MethodBase __originalMethod)
     {
-        if (__originalMethod?.DeclaringType != null)
-        {
-            var className = __originalMethod.DeclaringType.FullName;
-            if (SubmoduleManager.HasLoaded.Contains(className))
-                return false;
-        }
-
         if (SubmoduleManager.TryGetHookDelegate(__originalMethod!, out var hookDelegate))
         {
             hookDelegate();
@@ -134,12 +130,21 @@ public static class SetHooksPatch
         return true;
     }
 
+    public static bool SetHooksPrefix(MethodBase __originalMethod)
+    {
+        if (__originalMethod?.DeclaringType == null)
+            return true;
+
+        var className = __originalMethod.DeclaringType.FullName;
+        return !SubmoduleManager.HasLoaded.Contains(className);
+    }
+
     public static void SetHooksPostfix(MethodBase __originalMethod)
     {
-        if (__originalMethod?.DeclaringType != null)
-        {
-            var className = __originalMethod.DeclaringType.FullName;
-            SubmoduleManager.HasLoaded.Add(className);
-        }
+        if (__originalMethod?.DeclaringType == null)
+            return;
+
+        var className = __originalMethod.DeclaringType.FullName;
+        SubmoduleManager.HasLoaded.Add(className);
     }
 }
