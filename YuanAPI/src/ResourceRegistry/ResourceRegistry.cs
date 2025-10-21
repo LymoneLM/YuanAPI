@@ -19,6 +19,6 @@ public class ResourceRegistry
 
     public static void SetHooks()
     {
-        YuanAPI.Harmony.PatchAll(typeof(ResourcesPatch));
+        YuanAPIPlugin.Harmony.PatchAll(typeof(ResourcesPatch));
     }
 }

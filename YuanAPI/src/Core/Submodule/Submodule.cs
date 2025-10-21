@@ -23,10 +23,10 @@ internal class NoNeedLoad : Attribute { }
 internal static class SubmoduleManager
 {
     private static bool _isInitialized = false;
-    private static Harmony _harmony = new Harmony(YuanAPI.MODGUID+".Submodule");
+    private static Harmony _harmony = new Harmony(YuanAPIPlugin.MODGUID+".Submodule");
 
     private static Dictionary<MethodBase, Action> _hookDelegates = new Dictionary<MethodBase, Action>();
-    internal static HashSet<string> HasLoaded = []; 
+    internal static HashSet<string> HasLoaded = [];
 
     static SubmoduleManager()
     {
