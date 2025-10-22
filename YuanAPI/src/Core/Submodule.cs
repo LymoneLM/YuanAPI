@@ -24,7 +24,7 @@ internal static class SubmoduleManager
     private static bool _isInitialized = false;
     private static Harmony _harmony = new Harmony(YuanAPIPlugin.MODGUID+".Submodule");
 
-    private static Dictionary<MethodBase, Action> _hookDelegates = new Dictionary<MethodBase, Action>();
+    private static Dictionary<Type, Action> _hookDelegates = new Dictionary<Type, Action>();
     internal static HashSet<string> HasLoaded = [];
 
     internal static void Initialize()
@@ -72,12 +72,11 @@ internal static class SubmoduleManager
         var setHooksPostfix = typeof(SetHooksPatch).GetMethod("SetHooksPostfix");
         _harmony.Patch(setHooksMethod, postfix: new HarmonyMethod(setHooksPostfix));
 
+        // 创建委托
+        _hookDelegates[type] = CreateHookDelegate(setHooksMethod);
+
         foreach (var method in methods)
         {
-            // 创建委托
-            var hookDelegate = CreateHookDelegate(setHooksMethod);
-            _hookDelegates[method] = hookDelegate;
-
             // 使用通用补丁
             var patchMethod = typeof(SetHooksPatch).GetMethod("MethodPrefix");
             _harmony.Patch(method, prefix: new HarmonyMethod(patchMethod));
@@ -91,9 +90,9 @@ internal static class SubmoduleManager
         return (Action)Delegate.CreateDelegate(typeof(Action), setHooksMethod);
     }
 
-    public static bool TryGetHookDelegate(MethodBase method, out Action hookDelegate)
+    public static bool TryGetHookDelegate(Type type, out Action hookDelegate)
     {
-        return _hookDelegates.TryGetValue(method, out hookDelegate);
+        return _hookDelegates.TryGetValue(type, out hookDelegate);
     }
 }
 
@@ -103,7 +102,7 @@ public static class SetHooksPatch
 {
     public static bool MethodPrefix(MethodBase __originalMethod)
     {
-        if (SubmoduleManager.TryGetHookDelegate(__originalMethod!, out var hookDelegate))
+        if (SubmoduleManager.TryGetHookDelegate(__originalMethod.DeclaringType!, out var hookDelegate))
         {
             hookDelegate();
         }
