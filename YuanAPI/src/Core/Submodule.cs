@@ -8,23 +8,28 @@ using System.Reflection;
 
 namespace YuanAPI;
 
+/// <summary>
+/// YuanAPI子模块
+/// 自动Patch本类所有public方法，使其调用前先执行本类的SetHooks方法
+/// 同时会确保SetHooks方法只会执行一次
+/// <param name="AutoPatchPublicMethod">启用自动Patch</param>
+/// </summary>
 [MeansImplicitUse]
 [AttributeUsage(AttributeTargets.Class)]
 internal class Submodule : Attribute
 {
-    public Version? Build = null;
     public bool AutoPatchPublicMethod = true;
 }
 
 [AttributeUsage(AttributeTargets.Method)]
-internal class NoNeedLoad : Attribute { }
+internal class NoInit : Attribute { }
 
 internal static class SubmoduleManager
 {
     private static bool _isInitialized = false;
-    private static Harmony _harmony = new Harmony(YuanAPIPlugin.MODGUID+".Submodule");
+    private static readonly Harmony _harmony = new Harmony(YuanAPIPlugin.MODGUID+".Submodule");
 
-    private static Dictionary<Type, Action> _hookDelegates = new Dictionary<Type, Action>();
+    private static readonly Dictionary<Type, Action> _hookDelegates = new Dictionary<Type, Action>();
     internal static HashSet<string> HasLoaded = [];
 
     internal static void Initialize()
@@ -62,7 +67,7 @@ internal static class SubmoduleManager
         var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
             .Where(m => !m.IsSpecialName) // 排除属性访问器等
             .Where(m => m.DeclaringType == type)
-            .Where(m => m.GetCustomAttribute<NoNeedLoad>() == null)
+            .Where(m => m.GetCustomAttribute<NoInit>() == null)
             .Where(m => m.Name != "SetHooks")
             .ToList();
 
