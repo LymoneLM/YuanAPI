@@ -10,7 +10,7 @@ public class ResourceData
     public string ModPath;
     public string KeyWord;
 
-    public AssetBundle bundle;
+    public AssetBundle Bundle;
 
     /// <summary>
     /// Create new resource definition
@@ -42,20 +42,20 @@ public class ResourceData
     /// </summary>
     public bool HasAssetBundle()
     {
-        return bundle != null;
+        return Bundle != null;
     }
 
     /// <summary>
     /// Load asset bundle from mod path.
     /// </summary>
     /// <param name="bundleName">Bundle name</param>
-    /// <exception cref="LoadException">Thrown if loading an asset bundle has failed</exception>
+    /// <exception cref="ResourceException">Thrown if loading an asset bundle has failed</exception>
     public void LoadAssetBundle(string bundleName)
     {
-        bundle = AssetBundle.LoadFromFile($"{ModPath}/{bundleName}");
-        if (bundle == null)
+        Bundle = AssetBundle.LoadFromFile($"{ModPath}/{bundleName}");
+        if (Bundle == null)
         {
-            throw new LoadException($"Failed to load asset bundle at {ModPath}/{bundleName}");
+            throw new ResourceException($"Failed to load asset bundle at {ModPath}/{bundleName}");
         }
     }
 }

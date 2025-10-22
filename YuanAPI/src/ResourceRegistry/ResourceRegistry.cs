@@ -1,13 +1,13 @@
-﻿using YuanAPI.Patches;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using YuanAPI.ResourceRegistryPatches;
 
 namespace YuanAPI;
 
 /// <summary>
 /// Indicates that loading something has failed
 /// </summary>
-public class LoadException(string message) : Exception(message) { }
+public class ResourceException(string message) : Exception(message) { }
 
 [Submodule]
 public class ResourceRegistry
