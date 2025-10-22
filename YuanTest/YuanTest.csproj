@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>preview</LangVersion>
@@ -9,8 +9,8 @@
     </ItemGroup>
     <ItemGroup>
         <Reference Include="Assembly-CSharp" HintPath="..\Libs\Assembly-CSharp.dll" Private="false"/>
-        <Reference Include="Assembly-CSharp-firstpass">
-          <HintPath>..\..\AnZhi20-HoLMod\Libs\Assembly-CSharp-firstpass.dll</HintPath>
-        </Reference>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\YuanAPI\YuanAPI.csproj" />
     </ItemGroup>
 </Project>
