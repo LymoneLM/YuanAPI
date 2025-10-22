@@ -27,7 +27,7 @@ public class YuanAPIPlugin : BaseUnityPlugin
     {
         YuanLogger.SetLogger(new LoggerWrapper(Logger));
 
-
+        SubmoduleManager.Initialize();
     }
 }
 

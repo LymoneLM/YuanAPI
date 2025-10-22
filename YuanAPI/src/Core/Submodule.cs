@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 
 namespace YuanAPI;
 
@@ -13,7 +12,7 @@ namespace YuanAPI;
 [AttributeUsage(AttributeTargets.Class)]
 internal class Submodule : Attribute
 {
-    public Version? Build;
+    public Version? Build = null;
     public bool AutoPatchPublicMethod = true;
 }
 
@@ -28,14 +27,9 @@ internal static class SubmoduleManager
     private static Dictionary<MethodBase, Action> _hookDelegates = new Dictionary<MethodBase, Action>();
     internal static HashSet<string> HasLoaded = [];
 
-    static SubmoduleManager()
-    {
-        Initialize();
-        YuanLogger.logger.LogInfo($"SubmoduleManager: Initialize done");
-    }
-
     internal static void Initialize()
     {
+        YuanLogger.logger.LogDebug("Initializing Submodule");
         if (_isInitialized)
             return;
 
@@ -80,7 +74,7 @@ internal static class SubmoduleManager
 
         foreach (var method in methods)
         {
-            // 创建高性能委托
+            // 创建委托
             var hookDelegate = CreateHookDelegate(setHooksMethod);
             _hookDelegates[method] = hookDelegate;
 
@@ -94,20 +88,7 @@ internal static class SubmoduleManager
 
     private static Action CreateHookDelegate(MethodInfo setHooksMethod)
     {
-        // 使用DynamicMethod创建直接调用SetHook的委托
-        var dynamicMethod = new DynamicMethod(
-            "DirectSetHookCall",
-            null,
-            Type.EmptyTypes,
-            typeof(SubmoduleManager).Module,
-            true
-        );
-
-        var il = dynamicMethod.GetILGenerator();
-        il.Emit(OpCodes.Call, setHooksMethod);
-        il.Emit(OpCodes.Ret);
-
-        return (Action)dynamicMethod.CreateDelegate(typeof(Action));
+        return (Action)Delegate.CreateDelegate(typeof(Action), setHooksMethod);
     }
 
     public static bool TryGetHookDelegate(MethodBase method, out Action hookDelegate)
