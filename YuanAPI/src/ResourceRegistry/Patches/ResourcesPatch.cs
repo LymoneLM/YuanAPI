@@ -27,7 +27,7 @@ public static class ResourcesPatch
             if (resource.Bundle.Contains(path + ".prefab") && systemTypeInstance == typeof(GameObject))
             {
                 Object myPrefab = resource.Bundle.LoadAsset(path + ".prefab");
-                YuanLogger.logger.LogDebug($"Loading registered asset {path}: {(myPrefab != null ? "Success" : "Failure")}");
+                YuanLogger.LogDebug($"Loading registered asset {path}: {(myPrefab != null ? "Success" : "Failure")}");
 
                 __result = myPrefab;
                 return false;
@@ -40,7 +40,7 @@ public static class ResourcesPatch
 
                 Object mySprite = resource.Bundle.LoadAsset(path + extension, systemTypeInstance);
 
-                YuanLogger.logger.LogDebug($"Loading registered asset {path}: {(mySprite != null ? "Success" : "Failure")}");
+                YuanLogger.LogDebug($"Loading registered asset {path}: {(mySprite != null ? "Success" : "Failure")}");
 
                 __result = mySprite;
                 return false;
@@ -53,7 +53,7 @@ public static class ResourcesPatch
 
                 Object myAudioClip = resource.Bundle.LoadAsset(path + extension, systemTypeInstance);
 
-                YuanLogger.logger.LogDebug($"Loading registered asset {path}: {(myAudioClip != null ? "Success" : "Failure")}");
+                YuanLogger.LogDebug($"Loading registered asset {path}: {(myAudioClip != null ? "Success" : "Failure")}");
 
                 __result = myAudioClip;
                 return false;

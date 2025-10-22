@@ -29,7 +29,7 @@ internal static class SubmoduleManager
 
     internal static void Initialize()
     {
-        YuanLogger.logger.LogDebug("Initializing Submodule");
+        YuanLogger.LogDebug("Initializing Submodule");
         if (_isInitialized)
             return;
 
@@ -49,12 +49,12 @@ internal static class SubmoduleManager
             }
             else
             {
-                YuanLogger.logger.LogWarning($"SubmoduleManager: {nameof(type)} is submodule but not have SetHooks method");
+                YuanLogger.LogWarning($"SubmoduleManager: {nameof(type)} is submodule but not have SetHooks method");
             }
         }
 
         _isInitialized = true;
-        YuanLogger.logger.LogInfo($"SubmoduleManager: Patched {submoduleTypes.Count} submodule classes");
+        YuanLogger.LogInfo($"SubmoduleManager: Patched {submoduleTypes.Count} submodule classes");
     }
 
     private static void PatchType(Type type, MethodInfo setHooksMethod)
@@ -81,7 +81,7 @@ internal static class SubmoduleManager
             var patchMethod = typeof(SetHooksPatch).GetMethod("MethodPrefix");
             _harmony.Patch(method, prefix: new HarmonyMethod(patchMethod));
 
-            YuanLogger.logger.LogDebug($"Patched: {type.Name}.{method.Name}");
+            YuanLogger.LogDebug($"Patched: {type.Name}.{method.Name}");
         }
     }
 
