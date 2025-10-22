@@ -12,7 +12,7 @@ public static class ResourcesPatch
 {
     [HarmonyPrefix]
     [HarmonyPriority(Priority.Last)]
-    [HarmonyPatch(typeof(Resources), "Load", typeof(string), typeof(Type))]
+    [HarmonyPatch(typeof(Resources), nameof(Resources.Load), typeof(string), typeof(Type))]
     public static bool Prefix(ref string path, Type systemTypeInstance, ref Object __result, bool __runOriginal)
     {
         if (!__runOriginal)

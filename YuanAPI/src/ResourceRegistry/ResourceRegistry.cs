@@ -21,4 +21,12 @@ public class ResourceRegistry
     {
         YuanAPIPlugin.Harmony.PatchAll(typeof(ResourcesPatch));
     }
+
+    /// <summary>
+    /// Registers mod resources for loading
+    /// </summary>
+    /// <param name="resource"></param>
+    public static void AddResource(ResourceData resource) {
+        ModResources.Add(resource);
+    }
 }
