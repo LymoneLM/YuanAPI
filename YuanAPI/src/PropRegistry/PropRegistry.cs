@@ -31,8 +31,9 @@ public class PropRegistry : IDisposable
         ResourceRegistry.SetHooks();
 
         YuanAPIPlugin.Harmony.PatchAll(typeof(ResourcesPatch));
-        YuanAPIPlugin.Harmony.PatchAll(typeof(MainloadPatch));
         YuanAPIPlugin.Harmony.PatchAll(typeof(SaveDataPatch));
+
+        YuanAPIPlugin.OnStart += LoadToMainload;
     }
 
     public PropRegistry(string modID, List<PropData> propList = null)
@@ -76,6 +77,24 @@ public class PropRegistry : IDisposable
 
             AllProps.Add(PropList[i]);
             Uid2Index.Add($"{ModID}:{PropList[i].ID}", count++);
+        }
+    }
+
+    private static void LoadToMainload()
+    {
+        VanillaPropCount = Mainload.AllPropdata.Count;
+        // ModOffsets.ForEach(offset => offset += vanilla);
+        // PropId2Index = new Dictionary<int, int>();
+
+        if (AllProps.Count == 0)
+            return;
+
+        foreach (var prop in AllProps)
+        {
+            Mainload.AllPropdata.Add(prop.ToVanillaPropDataList());
+            AllText.Text_AllProp.Add(prop.Text); //TODO: 改用L10N
+
+            YuanLogger.LogDebug($"添加物品{prop.Text[0]}");
         }
     }
 }
