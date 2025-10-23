@@ -9,20 +9,18 @@ internal class PropException(string message) : Exception(message) { }
 [Submodule]
 public class PropRegistry : IDisposable
 {
-    // 静态部分
+    // 静态变量
     internal static List<PropData> AllProps { get; set; } = [];
     internal static int VanillaPropCount { get; set; }
     internal static HashSet<string> AllModID { get; set; } = [];
 
     internal static Dictionary<string, int> Uid2Index { get; set; } = new Dictionary<string, int>();
-    // internal static Dictionary<int, int> PropId2Index { get; set; }
-
-    // internal static List<int> ModPropCount { get; set; } = [];
-    // internal static List<int> ModOffsets { get; set; } = [0];
 
     // 实例变量
     public string ModID { get; set; }
     public List<PropData> PropList { get; set; }
+
+    #region 静态方法
 
     public static void SetHooks()
     {
@@ -33,8 +31,27 @@ public class PropRegistry : IDisposable
         YuanAPIPlugin.Harmony.PatchAll(typeof(ResourcesPatch));
         YuanAPIPlugin.Harmony.PatchAll(typeof(SaveDataPatch));
 
-        YuanAPIPlugin.OnStart += LoadToMainload;
+        YuanAPIPlugin.OnStart += InjectMainload;
     }
+    private static void InjectMainload()
+    {
+        VanillaPropCount = Mainload.AllPropdata.Count;
+
+        if (AllProps.Count == 0)
+            return;
+
+        foreach (var prop in AllProps)
+        {
+            Mainload.AllPropdata.Add(prop.ToVanillaPropDataList());
+            AllText.Text_AllProp.Add(prop.Text); //TODO: 改用L10N
+
+            YuanLogger.LogDebug($"添加物品{prop.Text[0]}");
+        }
+    }
+
+    #endregion
+
+    #region 实例方法
 
     public PropRegistry(string modID, List<PropData> propList = null)
     {
@@ -42,17 +59,18 @@ public class PropRegistry : IDisposable
         this.PropList = propList ?? [];
     }
 
-    #region IDisposable 实现
+    public void Add(PropData prop)
+    {
+        PropList.Add(prop);
+    }
 
     public void Dispose()
     {
         YuanLogger.LogDebug("PropRegistry Dispose");
-        LoadPropsToAllProps();
+        RegisterProps();
     }
 
-    #endregion
-
-    public void LoadPropsToAllProps()
+    public void RegisterProps()
     {
         if (string.IsNullOrEmpty(ModID))
             throw new PropException("加载失败：该模组没有ModID");
@@ -80,21 +98,6 @@ public class PropRegistry : IDisposable
         }
     }
 
-    private static void LoadToMainload()
-    {
-        VanillaPropCount = Mainload.AllPropdata.Count;
-        // ModOffsets.ForEach(offset => offset += vanilla);
-        // PropId2Index = new Dictionary<int, int>();
+    #endregion
 
-        if (AllProps.Count == 0)
-            return;
-
-        foreach (var prop in AllProps)
-        {
-            Mainload.AllPropdata.Add(prop.ToVanillaPropDataList());
-            AllText.Text_AllProp.Add(prop.Text); //TODO: 改用L10N
-
-            YuanLogger.LogDebug($"添加物品{prop.Text[0]}");
-        }
-    }
 }
