@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using BepInEx;
 using YuanAPI;
 
@@ -15,7 +14,7 @@ namespace YuanTest
 
         public void Awake()
         {
-            using var propReg = new PropRegistry(MODNAME);
+            using var propReg = PropRegistry.CreateInstance(MODNAME);
             propReg.PropList.Add(new PropData()
             {
                 ID = "TestThing",

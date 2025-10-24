@@ -4,21 +4,16 @@ using YuanAPI.PropRegistryPatches;
 
 namespace YuanAPI;
 
-internal class PropException(string message) : Exception(message) { }
-
 [Submodule]
-public class PropRegistry : IDisposable
+public class PropRegistry
 {
     // 静态变量
     internal static List<PropData> AllProps { get; set; } = [];
     internal static int VanillaPropCount { get; set; }
     internal static HashSet<string> AllModID { get; set; } = [];
 
-    internal static Dictionary<string, int> Uid2Index { get; set; } = new Dictionary<string, int>();
+    internal static Dictionary<string, int> Uid2Index { get; set; } = new();
 
-    // 实例变量
-    public string ModID { get; set; }
-    public List<PropData> PropList { get; set; }
 
     #region 静态方法
 
@@ -33,6 +28,7 @@ public class PropRegistry : IDisposable
 
         YuanAPIPlugin.OnStart += InjectMainload;
     }
+
     private static void InjectMainload()
     {
         VanillaPropCount = Mainload.AllPropdata.Count;
@@ -51,50 +47,59 @@ public class PropRegistry : IDisposable
 
     #endregion
 
-    #region 实例方法
+    #region 实例
 
-    public PropRegistry(string modID, List<PropData> propList = null)
+    public static PropRegistryInstance CreateInstance(string @namespace = "Common", List<PropData> propList = null)
     {
-        this.ModID = modID;
-        this.PropList = propList ?? [];
-    }
-
-    public void Add(PropData prop)
-    {
-        PropList.Add(prop);
-    }
-
-    public void Dispose()
-    {
-        YuanLogger.LogDebug("PropRegistry Dispose");
-        RegisterProps();
-    }
-
-    public void RegisterProps()
-    {
-        if (string.IsNullOrEmpty(ModID))
-            throw new PropException("加载失败：该模组没有ModID");
-        if (!AllModID.Add(ModID))
-            throw new PropException("加载失败：重复的ModID: "+ModID);
-
-        var count = AllProps.Count;
-        var idSet =  new HashSet<string>();
-        for (var i = 0; i < PropList.Count; i++)
+        return new PropRegistryInstance
         {
-            if (PropList[i] == null || !PropList[i].IsValid())
-            {
-                YuanLogger.LogError($"PropRegistry: 模组 {ModID} 的数据 {i} 无效或非法，将跳过加载");
-                continue;
-            }
+            Namespace = @namespace,
+            PropList = propList ?? []
+        };
+    }
 
-            if (!idSet.Add(PropList[i].ID))
-            {
-                YuanLogger.LogError($"PropRegistry: 模组 {ModID} 具有重复的ID {PropList[i].ID} ，将跳过加载");
-                continue;
-            }
+    public class PropRegistryInstance : IDisposable
+    {
+        public string Namespace { get; set; }
+        public List<PropData> PropList { get; set; }
 
-            AllProps.Add(PropList[i]);
-            Uid2Index.Add($"{ModID}:{PropList[i].ID}", count++);
+        public void Add(PropData prop)
+        {
+            PropList.Add(prop);
+        }
+
+        public void Dispose()
+        {
+            YuanLogger.LogDebug("PropRegistry Dispose");
+            RegisterProps();
+        }
+
+        public void RegisterProps()
+        {
+            // TODO: 处理Vanilla命名空间
+            if (string.IsNullOrEmpty(Namespace))
+                Namespace = "Common";
+            // TODO: 同名覆盖策略
+
+            var count = AllProps.Count;
+            var idSet =  new HashSet<string>();
+            for (var i = 0; i < PropList.Count; i++)
+            {
+                if (PropList[i] == null || !PropList[i].IsValid())
+                {
+                    YuanLogger.LogError($"PropRegistry: 模组 {Namespace} 的数据 {i} 无效或非法，将跳过加载");
+                    continue;
+                }
+
+                if (!idSet.Add(PropList[i].ID))
+                {
+                    YuanLogger.LogError($"PropRegistry: 模组 {Namespace} 具有重复的ID {PropList[i].ID} ，将跳过加载");
+                    continue;
+                }
+
+                AllProps.Add(PropList[i]);
+                Uid2Index.Add($"{Namespace}:{PropList[i].ID}", count++);
+            }
         }
     }
 

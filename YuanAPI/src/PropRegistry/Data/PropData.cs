@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace YuanAPI;
 
@@ -38,13 +39,14 @@ public class PropData
     public List<string> ToVanillaPropDataList()
     {
         if (!IsValid())
-            throw new PropException("无法使用非法数据构造数据序列");
+            throw new InvalidDataException("无法使用非法数据构造数据序列");
 
-        var result = new List<string>();
-
-        result.Add(Price.ToString());
-        result.Add(Category.ToString());
-        result.Add(GetEffectString());
+        var result = new List<string>
+        {
+            Price.ToString(),
+            Category.ToString(),
+            GetEffectString()
+        };
 
         return result;
     }
