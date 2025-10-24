@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using HarmonyLib;
 using YuanAPI.PropRegistryPatches;
 
 namespace YuanAPI;
@@ -8,14 +10,17 @@ namespace YuanAPI;
 public class PropRegistry
 {
     // 静态变量
-    internal static List<PropData> AllProps { get; set; } = [];
-    internal static int VanillaPropCount { get; set; }
-    internal static HashSet<string> AllModID { get; set; } = [];
+    private static List<PropData> _allProps = [];
+    private static List<PropData> _patchedVanillaProps = [];
+    private static Dictionary<string, int> _uid2Index = new();
 
-    internal static Dictionary<string, int> Uid2Index { get; set; } = new();
+    internal static int VanillaPropCount { get; private set; }
+
+    private const string DefaultNamespace = "Common";
+    private const string VanillaClassName = "Vanilla";
 
 
-    #region 静态方法
+    #region static methods
 
     public static void Initialize()
     {
@@ -29,39 +34,109 @@ public class PropRegistry
         YuanAPIPlugin.OnStart += InjectMainload;
     }
 
+    [NoInit]
+    public static PropData GetProp(string uid)
+    {
+        return _allProps[_uid2Index[uid]];
+    }
+
+    [NoInit]
+    public static PropData GetProp(int index)
+    {
+        return _allProps[index];
+    }
+
+    [NoInit]
+    public static bool TryGetProp(string uid , out PropData prop)
+    {
+        var success = _uid2Index.TryGetValue(uid, out var index);
+        prop = success ? _allProps[index] : null;
+        return success;
+    }
+
+    [NoInit]
+    public static bool TryGetProp(int index, out PropData prop)
+    {
+        var success = index >= 0 && index < _allProps.Count;
+        prop = success ? _allProps[index] : null;
+        return success;
+    }
+
+    [NoInit]
+    public static string GetUid(int index)
+    {
+        return _allProps[index].ID;
+    }
+
+    [NoInit]
+    public static bool TryGetUid(int index, out string uid)
+    {
+        var success = index >= 0 && index < _allProps.Count;
+        uid = _allProps[index].ID;
+        return success;
+    }
+
+    [NoInit]
+    public static int GetIndex(string uid)
+    {
+        return _uid2Index[uid];
+    }
+
+    [NoInit]
+    public static bool TryGetIndex(string uid, out int index)
+    {
+        return _uid2Index.TryGetValue(uid, out index);
+    }
+
     private static void InjectMainload()
     {
         VanillaPropCount = Mainload.AllPropdata.Count;
 
-        if (AllProps.Count == 0)
-            return;
+        var vanilla= Mainload.AllPropdata.Select(PropData.FromVanillaPropData).ToList();
+        vanilla.AddRange(_allProps);
+        _allProps = vanilla;
+        //TODO: 补充L10N
 
-        foreach (var prop in AllProps)
+        _uid2Index.Keys.Do(key => _uid2Index[key] += VanillaPropCount);
+        for (var i = 0; i < VanillaPropCount; i++)
         {
-            Mainload.AllPropdata.Add(prop.ToVanillaPropDataList());
-            AllText.Text_AllProp.Add(prop.Text); //TODO: 改用L10N
-
-            YuanLogger.LogDebug($"添加物品{prop.Text[0]}");
+            _uid2Index.Add($"{VanillaClassName}:{i}", i);
         }
+
+        foreach (var prop in _patchedVanillaProps)
+        {
+            if (int.TryParse(prop.ID, out var index) && index >= 0 && index < VanillaPropCount)
+            {
+                prop.ID = $"{DefaultNamespace}:{index}";
+                _allProps[index] = prop;
+                //TODO: 补充L10N
+            }
+        }
+
+        Mainload.AllPropdata = _allProps.Select(prop => prop.ToVanillaPropData()).ToList();
+
+        YuanLogger.LogDebug($"PropRegistry: 添加了{Mainload.AllPropdata.Count-VanillaPropCount}个物品");
     }
 
     #endregion
 
-    #region 实例
+    #region instance methods
 
-    public static PropRegistryInstance CreateInstance(string @namespace = "Common", List<PropData> propList = null)
+    public static PropRegistryInstance CreateInstance(string @namespace = DefaultNamespace, List<PropData> propList = null)
     {
-        return new PropRegistryInstance
-        {
-            Namespace = @namespace,
-            PropList = propList ?? []
-        };
+        return new PropRegistryInstance(@namespace, propList ?? []);
     }
 
     public class PropRegistryInstance : IDisposable
     {
-        public string Namespace { get; set; }
-        public List<PropData> PropList { get; set; }
+        public string Namespace { get; private set; }
+        public List<PropData> PropList { get; private set; }
+
+        internal PropRegistryInstance(string @namespace, List<PropData> propList)
+        {
+            Namespace = @namespace;
+            PropList = propList;
+        }
 
         public void Add(PropData prop)
         {
@@ -76,29 +151,42 @@ public class PropRegistry
 
         public void RegisterProps()
         {
-            // TODO: 处理Vanilla命名空间
-            if (string.IsNullOrEmpty(Namespace))
-                Namespace = "Common";
-            // TODO: 同名覆盖策略
+            if (string.IsNullOrWhiteSpace(Namespace))
+                Namespace = DefaultNamespace;
 
-            var count = AllProps.Count;
-            var idSet =  new HashSet<string>();
-            for (var i = 0; i < PropList.Count; i++)
+            if (Namespace == VanillaClassName)
             {
-                if (PropList[i] == null || !PropList[i].IsValid())
+                foreach (var prop in PropList)
                 {
-                    YuanLogger.LogError($"PropRegistry: 模组 {Namespace} 的数据 {i} 无效或非法，将跳过加载");
+                    if (!prop.IsValid())
+                    {
+                        YuanLogger.LogError($"PropRegistry: 名为 {Namespace}:{prop.ID} 的数据为空或非法，将跳过注册");
+                        continue;
+                    }
+                    _patchedVanillaProps.Add(prop);
+                }
+            }
+
+            var count = _allProps.Count;
+            foreach (var prop in PropList)
+            {
+                if (!prop.IsValid())
+                {
+                    YuanLogger.LogError($"PropRegistry: 位于 {Namespace}:{prop.ID} 的数据为空或非法，将跳过注册");
                     continue;
                 }
 
-                if (!idSet.Add(PropList[i].ID))
+                var uid = $"{Namespace}:{prop.ID}";
+                prop.ID = uid;
+                if (_uid2Index.TryGetValue(uid, out var index))
                 {
-                    YuanLogger.LogError($"PropRegistry: 模组 {Namespace} 具有重复的ID {PropList[i].ID} ，将跳过加载");
-                    continue;
+                    _allProps[index] = prop;
                 }
-
-                AllProps.Add(PropList[i]);
-                Uid2Index.Add($"{Namespace}:{PropList[i].ID}", count++);
+                else
+                {
+                    _allProps.Add(prop);
+                    _uid2Index.Add(uid, count++);
+                }
             }
         }
     }

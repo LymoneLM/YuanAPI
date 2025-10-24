@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace YuanAPI;
 
 public class PropData
 {
     public string ID { get; set; }
-    public int Price { get; set; } = 0;
+    public int Price { get; set; }
     public int Category { get; set; } = (int)PropCategory.ModDefault;
     public Dictionary<int, int> PropEffect { get; set; } = [];
 
@@ -36,7 +37,19 @@ public class PropData
         return isValid;
     }
 
-    public List<string> ToVanillaPropDataList()
+    public static PropData FromVanillaPropData(List<string> listData, int index)
+    {
+        return new PropData(index.ToString(),
+                            int.Parse(listData[0]),
+                            int.Parse(listData[1]),
+                            listData[2].Split('|')
+                                .Select((str,effect)=>(effect, int.Parse(str)))
+                                .ToDictionary(x=>x.effect,x=>x.Item2),
+                            ["中文","English"],        //TODO: 改用L10N
+                            $"AllProp/{index}");
+    }
+
+    public List<string> ToVanillaPropData()
     {
         if (!IsValid())
             throw new InvalidDataException("无法使用非法数据构造数据序列");

@@ -22,10 +22,7 @@ public static class ResourcesPatch
 
         var propID = int.Parse(path.Substring("AllProp/".Length));
 
-        if (propID < PropRegistry.VanillaPropCount)
-            return true;
-        propID = propID - PropRegistry.VanillaPropCount;
-        path = PropRegistry.AllProps[propID].PrefabPath;
+        path = PropRegistry.GetProp(propID).PrefabPath;
 
         return true;
     }

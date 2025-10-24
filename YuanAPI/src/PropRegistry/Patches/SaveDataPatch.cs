@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 
 namespace YuanAPI.PropRegistryPatches;
@@ -15,21 +16,21 @@ public class SaveDataPatch
     {
         YuanLogger.LogDebug("SaveGameData to UID");
 
-        var propHave = Mainload.Prop_have.ConvertAll(prop => new List<string>(prop));
+        var propHave = Mainload.Prop_have.Select(prop => new List<string>(prop)).ToList();
         var propCount = PropRegistry.VanillaPropCount;
 
         propHave.ForEach(prop =>
         {
             if (!int.TryParse(prop[0], out var propID))
             {
-                YuanLogger.LogError($"SaveData: 无法解析数据ID{prop[0]}，将跳过保存，数据将丢失");
+                YuanLogger.LogError($"SaveData: 无法解析数据ID{prop[0]}，这可能不是YuanAPI导致的，本次保存将跳过该数据");
                 propHave.Remove(prop);
                 return;
             }
 
             if (propID >= propCount)
             {
-                prop[0] = PropRegistry.AllProps[propID-propCount].ToString();
+                prop[0] = PropRegistry.GetUid(propID);
             }
         });
 
@@ -50,14 +51,17 @@ public class SaveDataPatch
 
         propHave.ForEach(prop =>
         {
-            if (int.TryParse(prop[0], out var _))
+            if (int.TryParse(prop[0], out var id) && id >= 0 && id < propCount)
                 return;
-            if (!PropRegistry.Uid2Index.TryGetValue(prop[0], out var propID))
+            if (!PropRegistry.TryGetIndex(prop[0], out var index))
             {
-                YuanLogger.LogError($"SaveData: 无法解析数据ID{prop[0]}，将跳过载入，数据将丢失");
-                return;
+                YuanLogger.LogError($"SaveData: 无法解析数据ID{prop[0]}，请检查是否有模组未加载，本次加载将跳过该数据");
+                propHave.Remove(prop);
             }
-            prop[0] =  (propID+propCount).ToString();
+            else
+            {
+                prop[0] = index.ToString();
+            }
         });
     }
 }
