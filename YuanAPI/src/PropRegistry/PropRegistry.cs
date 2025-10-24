@@ -17,11 +17,11 @@ public class PropRegistry
 
     #region 静态方法
 
-    public static void SetHooks()
+    public static void Initialize()
     {
         YuanLogger.LogDebug("PropRegistry SetHooks Running");
 
-        ResourceRegistry.SetHooks();
+        ResourceRegistry.Initialize();
 
         YuanAPIPlugin.Harmony.PatchAll(typeof(ResourcesPatch));
         YuanAPIPlugin.Harmony.PatchAll(typeof(SaveDataPatch));

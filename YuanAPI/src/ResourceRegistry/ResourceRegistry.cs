@@ -17,7 +17,7 @@ public class ResourceRegistry
     internal static string[] SpriteFileExtensions = [".jpg", ".png", ".tif"];
     internal static string[] AudioClipFileExtensions = [".mp3", ".ogg", ".waw", ".aif"];
 
-    public static void SetHooks()
+    public static void Initialize()
     {
         YuanAPIPlugin.Harmony.PatchAll(typeof(ResourcesPatch));
     }

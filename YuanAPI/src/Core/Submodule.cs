@@ -9,9 +9,8 @@ using System.Reflection;
 namespace YuanAPI;
 
 /// <summary>
-/// YuanAPI子模块
-/// 自动Patch本类所有public方法，使其调用前先执行本类的SetHooks方法
-/// 同时会确保SetHooks方法只会执行一次
+/// 自动Patch所有public方法，使其调用前先执行Initialize方法
+/// 并确保Initialize方法只会执行一次
 /// <param name="AutoPatchPublicMethod">启用自动Patch</param>
 /// </summary>
 [MeansImplicitUse]
@@ -26,17 +25,18 @@ internal class NoInit : Attribute { }
 
 internal static class SubmoduleManager
 {
-    private static bool _isInitialized = false;
-    private static readonly Harmony _harmony = new Harmony(YuanAPIPlugin.MODGUID+".Submodule");
+    private static bool _hasInitialized = false;
+    private static Harmony _harmony = new Harmony(YuanAPIPlugin.MODGUID+".Submodule");
 
-    private static readonly Dictionary<Type, Action> _hookDelegates = new Dictionary<Type, Action>();
-    internal static HashSet<string> HasLoaded = [];
+    private static Dictionary<Type, Action> _initDelegates = new();
+    internal static HashSet<string> HasInitialized = [];
 
     internal static void Initialize()
     {
-        YuanLogger.LogDebug("Initializing Submodule");
-        if (_isInitialized)
+        if (_hasInitialized)
             return;
+
+        YuanLogger.LogDebug("Initializing Submodule");
 
         var assembly = Assembly.GetExecutingAssembly();
         var submoduleTypes = assembly.GetTypes()
@@ -45,91 +45,91 @@ internal static class SubmoduleManager
 
         foreach (var type in submoduleTypes)
         {
-            var setHooksMethod = type.GetMethod("SetHooks", BindingFlags.Public | BindingFlags.Static,
+            var initMethod = type.GetMethod("Initialize", BindingFlags.Public | BindingFlags.Static,
                 null, Type.EmptyTypes, null);
 
-            if (setHooksMethod != null)
+            if (initMethod != null)
             {
-                PatchType(type, setHooksMethod);
+                PatchType(type, initMethod);
             }
             else
             {
-                YuanLogger.LogWarning($"SubmoduleManager: {nameof(type)} is submodule but not have SetHooks method");
+                YuanLogger.LogWarning($"SubmoduleManager: {nameof(type)} is submodule but not have Initialize method");
             }
         }
 
-        _isInitialized = true;
+        _hasInitialized = true;
         YuanLogger.LogInfo($"SubmoduleManager: Patched {submoduleTypes.Count} submodule classes");
     }
 
-    private static void PatchType(Type type, MethodInfo setHooksMethod)
+    private static void PatchType(Type type, MethodInfo initMethod)
     {
         var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
             .Where(m => !m.IsSpecialName) // 排除属性访问器等
             .Where(m => m.DeclaringType == type)
             .Where(m => m.GetCustomAttribute<NoInit>() == null)
-            .Where(m => m.Name != "SetHooks")
+            .Where(m => m.Name != "Initialize")
             .ToList();
 
-        var setHooksPrefix = typeof(SetHooksPatch).GetMethod("SetHooksPrefix");
-        _harmony.Patch(setHooksMethod, prefix: new HarmonyMethod(setHooksPrefix));
+        var initPrefix = typeof(InitializePatch).GetMethod("InitializePrefix");
+        _harmony.Patch(initMethod, prefix: new HarmonyMethod(initPrefix));
 
-        var setHooksPostfix = typeof(SetHooksPatch).GetMethod("SetHooksPostfix");
-        _harmony.Patch(setHooksMethod, postfix: new HarmonyMethod(setHooksPostfix));
+        var initPostfix = typeof(InitializePatch).GetMethod("InitializePostfix");
+        _harmony.Patch(initMethod, postfix: new HarmonyMethod(initPostfix));
 
         // 创建委托
-        _hookDelegates[type] = CreateHookDelegate(setHooksMethod);
+        _initDelegates[type] = CreateInitDelegate(initMethod);
 
         foreach (var method in methods)
         {
             // 使用通用补丁
-            var patchMethod = typeof(SetHooksPatch).GetMethod("MethodPrefix");
+            var patchMethod = typeof(InitializePatch).GetMethod("MethodPrefix");
             _harmony.Patch(method, prefix: new HarmonyMethod(patchMethod));
 
             YuanLogger.LogDebug($"Patched: {type.Name}.{method.Name}");
         }
     }
 
-    private static Action CreateHookDelegate(MethodInfo setHooksMethod)
+    private static Action CreateInitDelegate(MethodInfo initMethod)
     {
-        return (Action)Delegate.CreateDelegate(typeof(Action), setHooksMethod);
+        return (Action)Delegate.CreateDelegate(typeof(Action), initMethod);
     }
 
-    public static bool TryGetHookDelegate(Type type, out Action hookDelegate)
+    public static bool TryGetInitDelegate(Type type, out Action initDelegate)
     {
-        return _hookDelegates.TryGetValue(type, out hookDelegate);
+        return _initDelegates.TryGetValue(type, out initDelegate);
     }
 }
 
 // Harmony补丁类
 [HarmonyPatch]
-public static class SetHooksPatch
+public static class InitializePatch
 {
     public static bool MethodPrefix(MethodBase __originalMethod)
     {
-        if (SubmoduleManager.TryGetHookDelegate(__originalMethod.DeclaringType!, out var hookDelegate))
+        if (SubmoduleManager.TryGetInitDelegate(__originalMethod.DeclaringType!, out var initDelegate))
         {
-            hookDelegate();
+            initDelegate();
         }
 
         return true;
     }
 
-    public static bool SetHooksPrefix(MethodBase __originalMethod)
+    public static bool InitializePrefix(MethodBase __originalMethod)
     {
         if (__originalMethod?.DeclaringType == null)
             return true;
 
         var className = __originalMethod.DeclaringType.FullName;
-        return !SubmoduleManager.HasLoaded.Contains(className);
+        return !SubmoduleManager.HasInitialized.Contains(className);
     }
 
-    public static void SetHooksPostfix(MethodBase __originalMethod)
+    public static void InitializePostfix(MethodBase __originalMethod)
     {
         if (__originalMethod?.DeclaringType == null)
             return;
 
         var className = __originalMethod.DeclaringType.FullName;
-        SubmoduleManager.HasLoaded.Add(className);
+        SubmoduleManager.HasInitialized.Add(className);
     }
 }
