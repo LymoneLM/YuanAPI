@@ -13,12 +13,12 @@ namespace YuanAPI;
 [Submodule]
 public class Localization
 {
-    // store[locale][namespace][key] = text
-    // 优化方向：拍平为Dic<(loc, ns, key), text>
-    private static Dictionary<string, Dictionary<string, Dictionary<string, string>>> _store = new();
+    // CHANGED: store[(loc, ns, key)] = text
+    private static Dictionary<(string loc, string ns, string key), string> _store = new();
+
     private static Dictionary<int, string> _index2Locale = new(); // 用于从原版获取语言信息
     private static Dictionary<string, List<string>> _fallbackChains = new();
-    private static Dictionary<string, string> _localeShowNames = new();
+    private static Dictionary<string, string> _localeShowNames = new(); // 兼具语言存在性检查用
 
     public static Action<string> LanguageChanged {get; set; }
 
@@ -58,14 +58,12 @@ public class Localization
         if (string.IsNullOrWhiteSpace(locale))
             throw new ArgumentException("locale 必须是非空字符串", nameof(locale));
 
-        if (_store.ContainsKey(locale))
+        if (_localeShowNames.ContainsKey(locale))
         {
             YuanLogger.LogWarning($"Localization： {locale} 语言重复注册，忽略本次注册");
         }
         else
         {
-            _store[locale] = new Dictionary<string, Dictionary<string, string>>();
-            _fallbackChains[locale] = [];
             _index2Locale[_index2Locale.Count] = locale;
             _localeShowNames[locale] = showName;
 
@@ -79,7 +77,7 @@ public class Localization
     /// </summary>
     public static void SetFallbackChain(string locale, List<string> fallbackChain)
     {
-        if (!_store.ContainsKey(locale))
+        if (!_localeShowNames.ContainsKey(locale))
             throw new ArgumentException("locale 未注册", nameof(locale));
 
         _fallbackChains[locale] = fallbackChain.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
@@ -98,7 +96,7 @@ public class Localization
         if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(localesPath))
             throw new DirectoryNotFoundException($"路径不存在：{localesPath}");
 
-        foreach (var locale in _store.Keys.ToList())
+        foreach (var locale in _localeShowNames.Keys.ToList())
         {
             var localeDir = Path.Combine(localesPath, locale);
             if (!Directory.Exists(localeDir)) continue;
@@ -135,9 +133,8 @@ public class Localization
         var searchOrder = BuildSearchLocales(locale);
         foreach (var loc in searchOrder)
         {
-            if (!_store.TryGetValue(loc, out var nsMap)) continue;
-            if (!nsMap.TryGetValue(@namespace, out var flat)) continue;
-            if (flat.TryGetValue(key, out var value)) return value;
+            if (_store.TryGetValue((loc, @namespace, key), out var value))
+                return value;
         }
 
         YuanLogger.LogWarning($"Localization: 无法解析 {locale}/{@namespace}:{key}");
@@ -213,12 +210,8 @@ public class Localization
             var flat = new Dictionary<string, string>();
             FlattenStringLeaves(root, flat, prefix: null);
 
-            if (!_store[locale].ContainsKey(@namespace))
-                _store[locale][@namespace] = new Dictionary<string, string>();
-
-            // 后读覆盖
             foreach (var kv in flat)
-                _store[locale][@namespace][kv.Key] = kv.Value;
+                _store[(locale, @namespace, kv.Key)] = kv.Value;
         }
         catch (JsonReaderException ex)
         {
@@ -239,17 +232,16 @@ public class Localization
                 var key = string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}";
                 var val = prop.Value;
 
-                if (val.Type == JTokenType.Object)
+                switch (val.Type)
                 {
-                    FlattenStringLeaves(val, output, key);
-                }
-                else if (val.Type == JTokenType.String)
-                {
-                    output[key] = val.Value<string>() ?? string.Empty;
-                }
-                else
-                {
-                    throw new InvalidDataException($"JSON 值必须为字符串（键：{key}，实际类型：{val.Type}）。");
+                    case JTokenType.Object:
+                        FlattenStringLeaves(val, output, key);
+                        break;
+                    case JTokenType.String:
+                        output[key] = val.Value<string>() ?? string.Empty;
+                        break;
+                    default:
+                        throw new InvalidDataException($"JSON 值必须为字符串（键：{key}，实际类型：{val.Type}）。");
                 }
             }
         }
@@ -314,4 +306,3 @@ public class Localization
         }
     }
 }
-
