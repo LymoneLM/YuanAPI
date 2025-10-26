@@ -13,12 +13,12 @@ namespace YuanAPI;
 [Submodule]
 public class Localization
 {
-    // CHANGED: store[(loc, ns, key)] = text
     private static Dictionary<(string loc, string ns, string key), string> _store = new();
 
     private static Dictionary<int, string> _index2Locale = new(); // 用于从原版获取语言信息
-    private static Dictionary<string, List<string>> _fallbackChains = new();
     private static Dictionary<string, string> _localeShowNames = new(); // 兼具语言存在性检查用
+    private static Dictionary<string, List<string>> _fallbackChains = new();
+    private static Dictionary<string, List<string>> _searchOrders = new();
 
     public static Action<string> LanguageChanged {get; set; }
 
@@ -69,6 +69,8 @@ public class Localization
 
             fallbackChain ??= [DefaultLocale];
             SetFallbackChain(locale, fallbackChain);
+
+            _searchOrders.Clear();
         }
     }
 
@@ -130,7 +132,7 @@ public class Localization
     {
         if (string.IsNullOrWhiteSpace(key)) return string.Empty;
 
-        var searchOrder = BuildSearchLocales(locale);
+        var searchOrder = BuildSearchOrders(locale);
         foreach (var loc in searchOrder)
         {
             if (_store.TryGetValue((loc, @namespace, key), out var value))
@@ -256,12 +258,16 @@ public class Localization
     /// </summary>
     /// <param name="locale">所需语言代码</param>
     /// <returns></returns>
-    private static List<string> BuildSearchLocales(string locale)
+    private static List<string> BuildSearchOrders(string locale)
     {
+        if(_searchOrders.TryGetValue(locale, out var list))
+            return list;
+
         var result = new List<string>();
         var visited = new HashSet<string>();
 
         Dfs(locale);
+        _searchOrders[locale] = result;
         return result;
 
         void Dfs(string loc)
