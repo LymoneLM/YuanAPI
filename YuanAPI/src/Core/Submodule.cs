@@ -9,9 +9,9 @@ using System.Reflection;
 namespace YuanAPI;
 
 /// <summary>
-/// 自动Patch所有public方法，使其调用前先执行Initialize方法
-/// 并确保Initialize方法只会执行一次
-/// <param name="AutoPatchPublicMethod">启用自动Patch</param>
+/// 自动Patch，所有public方法调用前先执行Initialize方法 <br/>
+/// 并确保Initialize方法只会执行一次 <br/>
+/// <param name="AutoPatchPublicMethod">启用自动Patch 默认值为true</param>
 /// </summary>
 [MeansImplicitUse]
 [AttributeUsage(AttributeTargets.Class)]
@@ -20,6 +20,10 @@ internal class Submodule : Attribute
     public bool AutoPatchPublicMethod = true;
 }
 
+/// <summary>
+/// 对public method使用 <br/>
+/// 使某个被标记为Submodule的类的方法免于自动Patch <br/>
+/// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 internal class NoInit : Attribute { }
 

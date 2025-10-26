@@ -6,7 +6,7 @@ Make development easier, simple yet indepth.
 
 欢迎添加QQ群交流：1058593281
 
-feel free to join our [Discor Server](https://discord.gg/5ubSTurmBe) for discussion.
+feel free to join our [Discord Server](https://discord.gg/5ubSTurmBe) for discussion.
 
 ## 版权许可
 
