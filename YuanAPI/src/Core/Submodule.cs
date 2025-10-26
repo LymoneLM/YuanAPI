@@ -78,9 +78,6 @@ internal static class SubmoduleManager
         var initPrefix = typeof(InitializePatch).GetMethod("InitializePrefix");
         _harmony.Patch(initMethod, prefix: new HarmonyMethod(initPrefix));
 
-        var initPostfix = typeof(InitializePatch).GetMethod("InitializePostfix");
-        _harmony.Patch(initMethod, postfix: new HarmonyMethod(initPostfix));
-
         // 创建委托
         _initDelegates[type] = CreateInitDelegate(initMethod);
 
@@ -125,15 +122,6 @@ public static class InitializePatch
             return true;
 
         var className = __originalMethod.DeclaringType.FullName;
-        return !SubmoduleManager.HasInitialized.Contains(className);
-    }
-
-    public static void InitializePostfix(MethodBase __originalMethod)
-    {
-        if (__originalMethod?.DeclaringType == null)
-            return;
-
-        var className = __originalMethod.DeclaringType.FullName;
-        SubmoduleManager.HasInitialized.Add(className);
+        return SubmoduleManager.HasInitialized.Add(className);
     }
 }
