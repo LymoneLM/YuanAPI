@@ -1,6 +1,7 @@
 # Ignore IDE files
 .idea
 .vs
+**.user
 # Ignore in-game library files
 Libs
 # Ignore build output directories
