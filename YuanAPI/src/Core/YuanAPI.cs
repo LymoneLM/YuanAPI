@@ -23,7 +23,7 @@ public class YuanAPIPlugin : BaseUnityPlugin
     public static readonly Version BuildFor = new Version(0, 7, 851);
     public static readonly Version Version = Version.Parse(VERSION);
 
-    internal static Action OnStart;
+    internal static event Action OnStart;
 
     private void Awake()
     {
@@ -34,7 +34,7 @@ public class YuanAPIPlugin : BaseUnityPlugin
 
     private void Start()
     {
-        OnStart();
+        OnStart?.Invoke();
     }
 }
 
