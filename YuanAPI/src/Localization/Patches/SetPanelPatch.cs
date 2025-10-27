@@ -9,7 +9,6 @@ public class SetPanelPatch
     [HarmonyPatch(typeof(SetPanel), nameof(SetPanel.SetLanguage))]
     public static void SetLanguagePostFix()
     {
-        YuanLogger.LogDebug("SetLanguagePostFix Called");
-        Localization.LanguageChanged?.Invoke(Localization.GetLocale(Mainload.SetData[4]));
+        Localization.CallLanguageChanged(Localization.GetLocale(Mainload.SetData[4]));
     }
 }
