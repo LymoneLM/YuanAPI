@@ -7,49 +7,44 @@ namespace YuanAPI;
 
 public class PropData
 {
-    public string ID { get; set; }
-    public int Price { get; set; }
-    public int Category { get; set; } = (int)PropCategory.ModDefault;
-    public Dictionary<int, int> PropEffect { get; set; } = [];
+    public string PropNamespace { get; set; } = PropRegistry.DefaultNamespace;
+    public string PropID { get; set; }
+    public string Uid => $"{PropNamespace}:{PropID}";
 
-    public List<string> Text { get; set; } = [];
+    public int? Price { get; set; } = null;
+    public int? Category { get; set; } = null;
+    public Dictionary<int, int> PropEffect { get; set; } = new();
+
+    public string TextNamespace { get; set; } = Localization.DefaultNamespace;
+    public string TextKey { get; set; }
     public string PrefabPath { get; set; }
-
-    public PropData() { }
-
-    public PropData(string id, int price = 0, int category = (int)PropCategory.ModDefault,
-                    Dictionary<int, int> propEffect = null,
-                    List<string> text = null, string prefabPath = null)
-    {
-        this.ID = id;
-        this.Price = price;
-        this.Category = category;
-        this.PropEffect = propEffect ?? new Dictionary<int, int>();
-        Text = text ?? [];
-        this.PrefabPath = prefabPath;
-    }
 
     public bool IsValid()
     {
-        var isValid = !string.IsNullOrEmpty(this.ID);
-        if ( Text.Count == 0 || string.IsNullOrEmpty(PrefabPath) )
-            isValid = false;
-        return isValid;
+        return !string.IsNullOrEmpty(PropNamespace) && !string.IsNullOrEmpty(PropID) &&
+               !string.IsNullOrEmpty(TextNamespace) && !string.IsNullOrEmpty(TextKey) &&
+               !string.IsNullOrEmpty(PrefabPath) &&
+               Price.HasValue && Category.HasValue;
     }
 
-    public static PropData FromVanillaPropData(List<string> listData, int index)
+    internal static PropData FromVanillaPropData(List<string> listData, int index)
     {
-        return new PropData(index.ToString(),
-                            int.Parse(listData[0]),
-                            int.Parse(listData[1]),
-                            listData[2].Split('|')
-                                .Select((str,effect)=>(effect, int.Parse(str)))
-                                .ToDictionary(x=>x.effect,x=>x.Item2),
-                            ["中文","English"],        //TODO: 改用L10N
-                            $"AllProp/{index}");
+        return new PropData
+        {
+            PropNamespace = PropRegistry.VanillaNamespace,
+            PropID = index.ToString(),
+            Price = int.Parse(listData[0]),
+            Category = int.Parse(listData[1]),
+            PropEffect = listData[2].Split('|')
+                .Select((str, effect) => (effect, int.Parse(str)))
+                .ToDictionary(x => x.effect, x => x.Item2),
+            TextNamespace = Localization.VanillaNamespace,
+            TextKey = $"Prop.{index}",
+            PrefabPath = $"AllProp/{index}",
+        };
     }
 
-    public List<string> ToVanillaPropData()
+    internal List<string> ToVanillaPropData()
     {
         if (!IsValid())
             throw new InvalidDataException("无法使用非法数据构造数据序列");
@@ -58,20 +53,50 @@ public class PropData
         {
             Price.ToString(),
             Category.ToString(),
-            GetEffectString()
+            string.Join("|",
+                from PropEffectType effect in Enum.GetValues(typeof(PropEffectType))
+                select PropEffect.TryGetValue((int)effect, out var value) ? value.ToString() : "0")
         };
 
         return result;
     }
 
-    public string GetEffectString()
+    public static PropData operator +(PropData sample, PropData that)
     {
-        List<string> effectsStr = [];
-        foreach (PropEffectType effect in Enum.GetValues(typeof(PropEffectType)))
-        {
-            effectsStr.Add(PropEffect.ContainsKey((int)effect) ? PropEffect[(int)effect].ToString() : 0.ToString());
-        }
-        return string.Join("|", effectsStr);
-    }
+        if (sample == null) return that;
+        if (that == null) return sample;
 
+        var result = new PropData
+        {
+            PropNamespace = that.PropNamespace != PropRegistry.DefaultNamespace ?
+                that.PropNamespace : sample.PropNamespace,
+
+            PropID = !string.IsNullOrEmpty(that.PropID) ? that.PropID : sample.PropID,
+
+            Price = that.Price ?? sample.Price,
+
+            Category = that.Category ?? sample.Category,
+
+            TextNamespace = that.TextNamespace != Localization.DefaultNamespace ?
+                that.TextNamespace : sample.TextNamespace,
+
+            TextKey = !string.IsNullOrEmpty(that.TextKey) ? that.TextKey : sample.TextKey,
+
+            PrefabPath = !string.IsNullOrEmpty(that.PrefabPath) ? that.PrefabPath : sample.PrefabPath,
+
+            PropEffect = new Dictionary<int, int>()
+        };
+
+        foreach (var effect in sample.PropEffect)
+        {
+            result.PropEffect[effect.Key] = effect.Value;
+        }
+
+        foreach (var effect in that.PropEffect)
+        {
+            result.PropEffect[effect.Key] = effect.Value;
+        }
+
+        return result;
+    }
 }

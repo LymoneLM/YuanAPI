@@ -124,9 +124,4 @@ public enum PropCategory
     /// 丹药
     /// </summary>
     Medicine = 23,
-
-    /// <summary>
-    /// 模组物品默认类
-    /// </summary>
-    ModDefault = 24
 }
