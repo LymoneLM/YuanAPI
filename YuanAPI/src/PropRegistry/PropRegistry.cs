@@ -135,7 +135,7 @@ public class PropRegistry
         {
             if (!prop.IsValid())
             {
-                YuanLogger.LogError($"PropRegistry: 位于 {prop.PropNamespace}:{prop.PropID??""} 的数据为空或非法，将跳过注册");
+                YuanLogger.LogError($"PropRegistry: 名为 {prop.PropNamespace}:{prop.PropID??""} 的数据为空或非法，将跳过注册");
                 continue;
             }
 
@@ -171,7 +171,7 @@ public class PropRegistry
     /// <param name="propList">物品数据集，可选</param>
     /// <returns></returns>
     public static PropRegistryInstance CreateInstance(PropData sample = null, List<PropData> propList = null)
-        => new(sample ?? new PropData(), propList ?? []);
+        => new(sample, propList);
 
     public class PropRegistryInstance : IDisposable
     {
@@ -182,7 +182,7 @@ public class PropRegistry
         internal PropRegistryInstance(PropData sample, List<PropData> propList)
         {
             Sample = sample;
-            propList.ForEach(Add);
+            propList?.ForEach(Add);
         }
 
         public void Add(PropData prop)

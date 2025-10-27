@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using BepInEx;
 using YuanAPI;
 
@@ -14,17 +16,38 @@ namespace YuanTest
 
         public void Awake()
         {
-            using var propReg = PropRegistry.CreateInstance(MODNAME);
-            propReg.PropList.Add(new PropData()
+            var executingAssembly = Assembly.GetExecutingAssembly();
+            var modPath = Path.GetDirectoryName(executingAssembly.Location);
+
+            Localization.LoadFromPath(modPath);
+            using var propReg = PropRegistry.CreateInstance();
+            propReg.Add(new PropData()
             {
-                ID = "TestThing",
+                PropNamespace = MODNAME,
+                PropID = "TestThing1",
+                Price = 100,
                 Category = (int)PropCategory.Weapon,
                 PropEffect = new Dictionary<int, int>()
                 {
                     {(int)PropEffectType.Might,100}
                 },
-                Text = ["测试物品","TestThing"],
+                TextNamespace = "Common",
+                TextKey = "TestItem.Thing1",
                 PrefabPath = "AllProp/1"
+            });
+            propReg.Add(new PropData()
+            {
+                PropNamespace = MODNAME,
+                PropID = "TestThing2",
+                Price = 20000,
+                Category = (int)PropCategory.JewelryM,
+                PropEffect = new Dictionary<int, int>()
+                {
+                    {(int)PropEffectType.Charisma,20}
+                },
+                TextNamespace = "Common",
+                TextKey = "TestItem.Thing2",
+                PrefabPath = "AllProp/2"
             });
         }
     }

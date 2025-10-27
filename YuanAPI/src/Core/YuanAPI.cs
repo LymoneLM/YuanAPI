@@ -11,6 +11,7 @@ namespace YuanAPI;
 /// <summary>
 /// Plugin class of Yuan API. Entry point
 /// </summary>
+[BepInDependency("cc.lymone.HoL.NewtonsoftJsonPlugin")]
 [BepInPlugin(MODGUID, MODNAME, VERSION)]
 public class YuanAPIPlugin : BaseUnityPlugin
 {
