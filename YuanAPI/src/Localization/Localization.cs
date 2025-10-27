@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -15,15 +16,16 @@ public class Localization
 {
     private static Dictionary<(string loc, string ns, string key), string> _store = new();
 
-    private static Dictionary<int, string> _index2Locale = new(); // 用于从原版获取语言信息
-    private static Dictionary<string, string> _localeShowNames = new(); // 兼具语言存在性检查用
+    private static List<string> _locales = [];
+    private static Dictionary<string, string> _localeShowNames = new();
     private static Dictionary<string, List<string>> _fallbackChains = new();
     private static Dictionary<string, List<string>> _searchOrders = new();
 
-    public static Action<string> LanguageChanged {get; set; }
+    public static event Action<string> OnLanguageChanged;
 
-    private const string DefaultLocale = "zh-CN";
-    private const string DefaultNamespace = "Common";
+    public const string DefaultLocale  = "zh-CN";
+    public const string DefaultNamespace = "Common";
+    public const string VanillaNamespace = "Vanilla";
 
     public static void Initialize()
     {
@@ -37,15 +39,108 @@ public class Localization
         YuanAPIPlugin.OnStart += InjectAllText;
     }
 
+    #region Vanilla Processed
+
+    private static List<FieldInfo> _vanillaFields = [];
+    private static Dictionary<string, int> _itemCounts = new();
+
     private static void LoadFromAllText()
     {
-        // TODO: 加载原版本地化数据
+        _vanillaFields = typeof(AllText).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(field => field.FieldType == typeof(List<List<string>>)).ToList();
+
+        if (_vanillaFields.Count == 0)
+        {
+            YuanLogger.LogError("Localization：未能成功找到原版字段");
+            return;
+        }
+
+        var langCount = ((List<List<string>>)_vanillaFields[0].GetValue(null))[0].Count;
+        if (langCount != _locales.Count)
+            YuanLogger.LogError($"Localization：原版的本地化语言数 {langCount} 与YuanAPI定义不一致，将尝试处理已定义语言，建议升级YuanAPI");
+
+        foreach (var field in _vanillaFields)
+        {
+            var fieldName = field.Name;
+            var list = (List<List<string>>)field.GetValue(null);
+            _itemCounts[fieldName] = list.Count;
+            list.ForEach((item, index) =>
+            {
+                if (item.Count == 0)
+                {
+                    _locales.ForEach(locale =>
+                        _store[(locale, VanillaNamespace, $"{fieldName}.{index}")] = "");
+                    return;
+                }
+
+                _locales.ForEach((locale, langIndex) =>
+                {
+                    _store[(locale, VanillaNamespace, $"{fieldName}.{index}")] = item[langIndex];
+                });
+            });
+        }
+
+        // 特殊字段处理
+        // AllText.Text_AllShenFen
+        var allSenFen = AllText.Text_AllShenFen;
+        allSenFen.ForEach((group, gIndex) =>
+        {
+            group.ForEach((item, iIndex) =>
+            {
+                _locales.ForEach((locale, langIndex) =>
+                {
+                    _store[(locale, VanillaNamespace, $"Text_AllShenFen.{gIndex}.{iIndex}")] = item[langIndex];
+                });
+            });
+        });
+
+        YuanLogger.LogDebug($"Localization：成功读入{_vanillaFields.Count + 1}个字段");
     }
 
     private static void InjectAllText()
     {
-        // TODO: 注入本地化数据到原版
+        if (_vanillaFields == null || _vanillaFields.Count == 0)
+        {
+            YuanLogger.LogError("Localization：原版字段未能成功读入，拒绝注入");
+            return;
+        }
+
+        foreach (var field in _vanillaFields)
+        {
+            var fieldName = field.Name;
+            var count = _itemCounts[fieldName];
+            List<List<string>> fieldList = [];
+            for (var i = 0; i < count; i++)
+            {
+                fieldList.Add(_locales.Select(locale =>
+                        GetText(locale, VanillaNamespace, $"{fieldName}.{i}")).ToList());
+            }
+            field.SetValue(null, fieldList);
+        }
+
+        // 特殊字段处理
+        // AllText.Text_AllShenFen
+        var gCount = AllText.Text_AllShenFen.Count;
+        for (var i = 0; i < gCount; i++)
+        {
+            var iCount = AllText.Text_AllShenFen[i].Count;
+            List<List<string>> itemList = [];
+            for (var j = 0; j < iCount; j++)
+            {
+                itemList.Add(_locales.Select(locale =>
+                        GetText(locale, VanillaNamespace, $"Text_AllShenFen.{i}.{j}")).ToList());
+            }
+            AllText.Text_AllShenFen[i] = itemList;
+        }
+
+        // 处理设置界面
+
+        YuanLogger.LogDebug($"Localization：成功注入{_locales.Count}种语言");
     }
+
+    #endregion
+
+    #region Public Methods
 
     /// <summary>
     /// 注册语言
@@ -58,13 +153,13 @@ public class Localization
         if (string.IsNullOrWhiteSpace(locale))
             throw new ArgumentException("locale 必须是非空字符串", nameof(locale));
 
-        if (_localeShowNames.ContainsKey(locale))
+        if (_locales.Contains(locale))
         {
             YuanLogger.LogWarning($"Localization： {locale} 语言重复注册，忽略本次注册");
         }
         else
         {
-            _index2Locale[_index2Locale.Count] = locale;
+            _locales.Add(locale);
             _localeShowNames[locale] = showName;
 
             fallbackChain ??= [DefaultLocale];
@@ -79,7 +174,7 @@ public class Localization
     /// </summary>
     public static void SetFallbackChain(string locale, List<string> fallbackChain)
     {
-        if (!_localeShowNames.ContainsKey(locale))
+        if (!_locales.Contains(locale))
             throw new ArgumentException("locale 未注册", nameof(locale));
 
         _fallbackChains[locale] = fallbackChain.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
@@ -88,8 +183,8 @@ public class Localization
     }
 
     /// <summary>
-    /// 加载指定路径下所有已注册语言的本地化数据：
-    /// {path}/locales/{locale}/{namespace}.json
+    /// 加载指定路径下所有已注册语言的本地化数据，后读覆盖 <br/>
+    /// 参考路径{path}/locales/{locale}/{namespace}.json <br/>
     /// <param name="path">locales文件夹所在路径</param>
     /// </summary>
     public static void LoadFromPath(string path)
@@ -98,7 +193,7 @@ public class Localization
         if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(localesPath))
             throw new DirectoryNotFoundException($"路径不存在：{localesPath}");
 
-        foreach (var locale in _localeShowNames.Keys.ToList())
+        foreach (var locale in _locales)
         {
             var localeDir = Path.Combine(localesPath, locale);
             if (!Directory.Exists(localeDir)) continue;
@@ -112,13 +207,26 @@ public class Localization
     }
 
     /// <summary>
-    /// 根据索引获取语言代码，无效索引会返回默认语言代码
+    /// 全量参数修改某条目，新增或覆盖
+    /// </summary>
+    /// <param name="loc">语言代码</param>
+    /// <param name="ns">命名空间</param>
+    /// <param name="key">条目的键值</param>
+    /// <param name="value">条目的内容</param>
+    public static void EditText(string loc, string ns, string key, string value)
+    {
+        _store[(loc, ns, key)] = value;
+    }
+
+    /// <summary>
+    /// 根据索引获取语言代码
     /// </summary>
     /// <param name="index">索引</param>
     /// <returns>语言代码</returns>
+    [NoInit]
     public static string GetLocale(int index)
     {
-        return _index2Locale.TryGetValue(index, out var locale) ? locale : DefaultLocale;
+        return _locales[index];
     }
 
     /// <summary>
@@ -143,6 +251,13 @@ public class Localization
         return $"{@namespace}:{key}";
     }
 
+    [NoInit]
+    public static List<string> GetTextAllLocales(string @namespace, string key)
+    {
+        return _locales.Select(locale =>
+            GetText(locale, @namespace, key)).ToList();
+    }
+
     /// <summary>
     /// 实例化，预设语言代码和命名空间以简化调用
     /// </summary>
@@ -165,9 +280,9 @@ public class Localization
                 if (field==value)
                     return;
                 if (value)
-                    LanguageChanged += SyncLang;
+                    OnLanguageChanged += SyncLang;
                 else
-                    LanguageChanged -= SyncLang;
+                    OnLanguageChanged -= SyncLang;
                 field = value;
             }
         }
@@ -194,13 +309,23 @@ public class Localization
         public string Get(string locale, string @namespace, string key) => GetText(locale, @namespace, key);
     }
 
+    # endregion
+
+    #region Private Methods
+
+    internal static void CallLanguageChanged(string locale)
+    {
+        OnLanguageChanged?.Invoke(locale);
+    }
 
     private static void LoadOneFile(string locale, string @namespace, string filePath)
     {
         try
         {
             using var fs = File.OpenRead(filePath);
-            using var sr = new StreamReader(fs, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true), detectEncodingFromByteOrderMarks: false);
+            using var sr = new StreamReader(fs,
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true),
+                detectEncodingFromByteOrderMarks: true);
             using var reader = new JsonTextReader(sr);
 
             // 若 JSON 非法，会抛 JsonReaderException
@@ -267,6 +392,8 @@ public class Localization
         var visited = new HashSet<string>();
 
         Dfs(locale);
+        result = result.Where(loc => _locales.Contains(loc)).ToList();
+
         _searchOrders[locale] = result;
         return result;
 
@@ -311,4 +438,7 @@ public class Localization
             return false;
         }
     }
+
+    #endregion
+
 }
