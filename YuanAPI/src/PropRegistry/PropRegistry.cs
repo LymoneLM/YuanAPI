@@ -57,14 +57,14 @@ public class PropRegistry
     [NoInit]
     public static string GetUid(int index)
     {
-        return _allProps[index].PropID;
+        return $"{_allProps[index].PropNamespace}:{_allProps[index].PropID}";
     }
 
     [NoInit]
-    public static bool TryGetUid(int index, out (string ns, string id) uid)
+    public static bool TryGetUid(int index, out string uid)
     {
         var success = index >= 0 && index < _allProps.Count;
-        uid = (_allProps[index].PropNamespace, _allProps[index].PropID);
+        uid = $"{_allProps[index].PropNamespace}:{_allProps[index].PropID}";
         return success;
     }
 
