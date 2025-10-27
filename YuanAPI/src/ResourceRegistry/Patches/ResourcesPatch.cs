@@ -18,27 +18,27 @@ public static class ResourcesPatch
         if (!__runOriginal)
             return false;
 
-        foreach (ResourceData resource in ResourceRegistry.ModResources)
+        foreach (var resource in ResourceRegistry.ModResources)
         {
 
             if (!path.Contains(resource.KeyWord) || !resource.HasAssetBundle())
                 continue;
 
-            if (resource.Bundle.Contains(path + ".prefab") && systemTypeInstance == typeof(GameObject))
+            if (resource.Bundle.Contains(path + ".prefab"))
             {
-                Object myPrefab = resource.Bundle.LoadAsset(path + ".prefab");
+                var myPrefab = resource.Bundle.LoadAsset(path + ".prefab");
                 YuanLogger.LogDebug($"Loading registered asset {path}: {(myPrefab != null ? "Success" : "Failure")}");
 
                 __result = myPrefab;
                 return false;
             }
 
-            foreach (string extension in ResourceRegistry.SpriteFileExtensions)
+            foreach (var extension in ResourceRegistry.SpriteFileExtensions)
             {
                 if (!resource.Bundle.Contains(path + extension))
                     continue;
 
-                Object mySprite = resource.Bundle.LoadAsset(path + extension, systemTypeInstance);
+                var mySprite = resource.Bundle.LoadAsset(path + extension, systemTypeInstance);
 
                 YuanLogger.LogDebug($"Loading registered asset {path}: {(mySprite != null ? "Success" : "Failure")}");
 
@@ -46,12 +46,12 @@ public static class ResourcesPatch
                 return false;
             }
 
-            foreach (string extension in ResourceRegistry.AudioClipFileExtensions)
+            foreach (var extension in ResourceRegistry.AudioClipFileExtensions)
             {
                 if (!resource.Bundle.Contains(path + extension))
                     continue;
 
-                Object myAudioClip = resource.Bundle.LoadAsset(path + extension, systemTypeInstance);
+                var myAudioClip = resource.Bundle.LoadAsset(path + extension, systemTypeInstance);
 
                 YuanLogger.LogDebug($"Loading registered asset {path}: {(myAudioClip != null ? "Success" : "Failure")}");
 

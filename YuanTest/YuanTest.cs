@@ -19,6 +19,10 @@ namespace YuanTest
             var executingAssembly = Assembly.GetExecutingAssembly();
             var modPath = Path.GetDirectoryName(executingAssembly.Location);
 
+            var resources = new ResourceData(MODNAME, "test", modPath);
+            resources.LoadAssetBundle("test");
+            ResourceRegistry.AddResource(resources);
+
             Localization.LoadFromPath(modPath);
             using var propReg = PropRegistry.CreateInstance();
             propReg.Add(new PropData()
@@ -47,7 +51,7 @@ namespace YuanTest
                 },
                 TextNamespace = "Common",
                 TextKey = "TestItem.Thing2",
-                PrefabPath = "AllProp/2"
+                PrefabPath = "Assets/Resources/allprop/test1"
             });
         }
     }

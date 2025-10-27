@@ -7,8 +7,8 @@ namespace YuanAPI;
 public class ResourceData
 {
     public string ModId;
-    public string ModPath;
     public string KeyWord;
+    public string ModPath;
 
     public AssetBundle Bundle;
 
