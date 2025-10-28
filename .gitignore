@@ -2,8 +2,7 @@
 .idea
 .vs
 **.user
-# Ignore in-game library files
-Libs
 # Ignore build output directories
+ModPack/BepInEx/
 **/bin
 **/obj

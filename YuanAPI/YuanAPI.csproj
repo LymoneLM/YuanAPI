@@ -10,8 +10,6 @@
     </ItemGroup>
     <ItemGroup>
         <Reference Include="Assembly-CSharp" HintPath="..\Libs\Assembly-CSharp.dll" Private="false"/>
-        <Reference Include="Assembly-CSharp-firstpass">
-          <HintPath>..\..\AnZhi20-HoLMod\Libs\Assembly-CSharp-firstpass.dll</HintPath>
-        </Reference>
+        <Reference Include="Assembly-CSharp-firstpass" HintPath="..\Libs\Assembly-CSharp-firstpass.dll" Private="false"/>
     </ItemGroup>
 </Project>

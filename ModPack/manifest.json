@@ -1,0 +1,10 @@
+{
+    "name": "YuanAPI",
+    "version_number": "0.1.0",
+    "website_url": "https://github.com/LymoneLM/YuanAPI",
+    "description": "吾今有世家模组程序库，为模组提供添加修改物品和本地化的工具。A modding library of House of Legacy. Provides tools for adding, modifying props and localized strings.",
+    "dependencies": [
+        "BepInEx-BepInExPack-5.4.2100",
+        "LymoneLM-NewtonsoftJson-13.0.4"
+    ]
+}
