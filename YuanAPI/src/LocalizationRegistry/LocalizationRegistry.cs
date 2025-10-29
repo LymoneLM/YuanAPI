@@ -12,7 +12,7 @@ using YuanAPI.LocalizationPatches;
 namespace YuanAPI;
 
 [Submodule]
-public class Localization
+public class LocalizationRegistry
 {
     private static Dictionary<(string loc, string ns, string key), string> _store = new();
 
@@ -32,6 +32,7 @@ public class Localization
         YuanLogger.LogDebug("Localization Initialize Called");
 
         YuanAPIPlugin.Harmony.PatchAll(typeof(SetPanelPatch));
+        YuanAPIPlugin.Harmony.PatchAll(typeof(SaveDataPatch));
 
         RegisterLocale("zh-CN","简体中文", []);
         RegisterLocale("en-US","English(US)", ["zh-CN"]);
@@ -132,8 +133,6 @@ public class Localization
             }
             AllText.Text_AllShenFen[i] = itemList;
         }
-
-        // 处理设置界面
 
         YuanLogger.LogDebug($"Localization：成功注入{_locales.Count}种语言");
     }
@@ -253,10 +252,14 @@ public class Localization
 
     [NoInit]
     public static List<string> GetTextAllLocales(string @namespace, string key)
-    {
-        return _locales.Select(locale =>
-            GetText(locale, @namespace, key)).ToList();
-    }
+        => _locales.Select(locale => GetText(locale, @namespace, key)).ToList();
+
+    [NoInit]
+    public static List<string> GetAllShowNames()
+        => _locales.Select(locale => _localeShowNames[locale]).ToList();
+
+    [NoInit]
+    public static int LocaleCount() => _locales.Count;
 
     /// <summary>
     /// 实例化，预设语言代码和命名空间以简化调用
