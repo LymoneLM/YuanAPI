@@ -12,7 +12,7 @@ public class SetPanelPatch
     [HarmonyPatch(typeof(SetPanel), nameof(SetPanel.SetLanguage))]
     public static void SetLanguagePostFix()
     {
-        LocalizationRegistry.CallLanguageChanged(LocalizationRegistry.GetLocale(Mainload.SetData[4]));
+        Localization.CallLanguageChanged(Localization.GetLocale(Mainload.SetData[4]));
     }
 
     [HarmonyPostfix]
@@ -21,7 +21,7 @@ public class SetPanelPatch
     {
         var langDropdown = __instance.transform.Find("LoadSpeed").Find("AllClass").GetComponent<Dropdown>();
         langDropdown.options =
-            LocalizationRegistry.GetAllShowNames().Select(name => new Dropdown.OptionData(name)).ToList();
+            Localization.GetAllShowNames().Select(name => new Dropdown.OptionData(name)).ToList();
         langDropdown.value = Mainload.SetData[4];
     }
 }

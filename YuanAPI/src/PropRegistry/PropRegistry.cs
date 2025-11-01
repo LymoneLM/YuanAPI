@@ -27,7 +27,7 @@ public class PropRegistry
         YuanLogger.LogDebug("PropRegistry Initialize Called");
 
         ResourceRegistry.Initialize();
-        LocalizationRegistry.Initialize();
+        Localization.Initialize();
 
         YuanAPIPlugin.Harmony.PatchAll(typeof(ResourcesPatch));
         YuanAPIPlugin.Harmony.PatchAll(typeof(SaveDataPatch));
@@ -95,7 +95,7 @@ public class PropRegistry
     {
         // 添加新增物品本地化字串
         foreach (var prop in _allProps)
-            AllText.Text_AllProp.Add(LocalizationRegistry.GetTextAllLocales(prop.TextNamespace, prop.TextKey));
+            AllText.Text_AllProp.Add(Localization.GetTextAllLocales(prop.TextNamespace, prop.TextKey));
 
         // 载入原版物品
         VanillaPropCount = Mainload.AllPropdata.Count;
@@ -116,7 +116,7 @@ public class PropRegistry
             if (!int.TryParse(prop.PropID, out var index) || index < 0 || index >= VanillaPropCount)
                 continue;
             _allProps[index] = prop;
-            AllText.Text_AllProp[index] = LocalizationRegistry.GetTextAllLocales(prop.TextNamespace, prop.TextKey);
+            AllText.Text_AllProp[index] = Localization.GetTextAllLocales(prop.TextNamespace, prop.TextKey);
         }
 
         Mainload.AllPropdata = _allProps.Select(prop => prop.ToVanillaPropData()).ToList();

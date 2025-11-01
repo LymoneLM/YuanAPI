@@ -23,7 +23,7 @@ namespace YuanTest
             resources.LoadAssetBundle("test");
             ResourceRegistry.AddResource(resources);
 
-            LocalizationRegistry.LoadFromPath(modPath);
+            Localization.LoadFromPath(modPath);
             using var propReg = PropRegistry.CreateInstance();
             propReg.Add(new PropData()
             {

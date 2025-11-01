@@ -15,7 +15,7 @@ public class PropData
     public int? Category { get; set; } = null;
     public Dictionary<int, int> PropEffect { get; set; } = new();
 
-    public string TextNamespace { get; set; } = LocalizationRegistry.DefaultNamespace;
+    public string TextNamespace { get; set; } = Localization.DefaultNamespace;
     public string TextKey { get; set; }
     public string PrefabPath { get; set; }
 
@@ -38,7 +38,7 @@ public class PropData
             PropEffect = listData[2].Split('|')
                 .Select((str, effect) => (effect, int.Parse(str)))
                 .ToDictionary(x => x.effect, x => x.Item2),
-            TextNamespace = LocalizationRegistry.VanillaNamespace,
+            TextNamespace = Localization.VanillaNamespace,
             TextKey = $"Prop.{index}",
             PrefabPath = $"AllProp/{index}",
         };
@@ -77,7 +77,7 @@ public class PropData
 
             Category = that.Category ?? sample.Category,
 
-            TextNamespace = that.TextNamespace != LocalizationRegistry.DefaultNamespace ?
+            TextNamespace = that.TextNamespace != Localization.DefaultNamespace ?
                 that.TextNamespace : sample.TextNamespace,
 
             TextKey = !string.IsNullOrEmpty(that.TextKey) ? that.TextKey : sample.TextKey,

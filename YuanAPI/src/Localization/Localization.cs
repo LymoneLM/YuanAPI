@@ -12,7 +12,7 @@ using YuanAPI.LocalizationPatches;
 namespace YuanAPI;
 
 [Submodule]
-public class LocalizationRegistry
+public class Localization
 {
     private static Dictionary<(string loc, string ns, string key), string> _store = new();
 
