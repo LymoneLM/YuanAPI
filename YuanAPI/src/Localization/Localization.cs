@@ -255,6 +255,12 @@ public class Localization
         => _locales.Select(locale => GetText(locale, @namespace, key)).ToList();
 
     [NoInit]
+    public static List<string> GetAllLocales()
+    {
+        return _locales;
+    }
+
+    [NoInit]
     public static List<string> GetAllShowNames()
         => _locales.Select(locale => _localeShowNames[locale]).ToList();
 
