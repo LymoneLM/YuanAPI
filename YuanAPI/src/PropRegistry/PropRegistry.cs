@@ -35,32 +35,27 @@ public class PropRegistry
         YuanAPIPlugin.OnStart += InjectMainload;
     }
 
-    [NoInit]
     public static PropData GetProp(string @namespace, string id)
     {
         return _allProps[_uidMap[(@namespace, id)]];
     }
 
-    [NoInit]
     public static PropData GetProp(string uid)
     {
         var list = uid.Split(':');
         return _allProps[_uidMap[(list[0], list[1])]];
     }
 
-    [NoInit]
     public static PropData GetProp(int index)
     {
         return _allProps[index];
     }
 
-    [NoInit]
     public static string GetUid(int index)
     {
         return $"{_allProps[index].PropNamespace}:{_allProps[index].PropID}";
     }
 
-    [NoInit]
     public static bool TryGetUid(int index, out string uid)
     {
         var success = index >= 0 && index < _allProps.Count;
@@ -68,19 +63,16 @@ public class PropRegistry
         return success;
     }
 
-    [NoInit]
     public static int GetIndex(string @namespace, string id)
     {
         return _uidMap[(@namespace, id)];
     }
 
-    [NoInit]
     public static bool TryGetIndex(string @namespace, string id, out int index)
     {
         return _uidMap.TryGetValue((@namespace, id), out index);
     }
 
-    [NoInit]
     public static bool TryGetIndex(string uid, out int index)
     {
         var list = uid.Split(':');
@@ -128,6 +120,7 @@ public class PropRegistry
     /// 注册物品数据
     /// </summary>
     /// <param name="props">物品数据列表</param>
+    [AutoInit]
     public static void RegisterProps(List<PropData> props)
     {
         var count = _allProps.Count;
@@ -170,6 +163,7 @@ public class PropRegistry
     /// <param name="sample">样例，可选</param>
     /// <param name="propList">物品数据集，可选</param>
     /// <returns></returns>
+    [AutoInit]
     public static PropRegistryInstance CreateInstance(PropData sample = null, List<PropData> propList = null)
         => new(sample, propList);
 

@@ -147,6 +147,7 @@ public class Localization
     /// <param name="showName">语言的显示名</param>
     /// <param name="fallbackChain">指定该语言的回退链</param>
     /// </summary>
+    [AutoInit]
     public static void RegisterLocale(string locale, string showName, List<string> fallbackChain = null)
     {
         if (string.IsNullOrWhiteSpace(locale))
@@ -171,6 +172,7 @@ public class Localization
     /// <summary>
     /// 设置某语言的回退链
     /// </summary>
+    [AutoInit]
     public static void SetFallbackChain(string locale, List<string> fallbackChain)
     {
         if (!_locales.Contains(locale))
@@ -186,6 +188,7 @@ public class Localization
     /// 参考路径{path}/locales/{locale}/{namespace}.json <br/>
     /// <param name="path">locales文件夹所在路径</param>
     /// </summary>
+    [AutoInit]
     public static void LoadFromPath(string path)
     {
         var localesPath = Path.Combine(path, "locales");
@@ -212,6 +215,7 @@ public class Localization
     /// <param name="ns">命名空间</param>
     /// <param name="key">条目的键值</param>
     /// <param name="value">条目的内容</param>
+    [AutoInit]
     public static void EditText(string loc, string ns, string key, string value)
     {
         _store[(loc, ns, key)] = value;
@@ -222,7 +226,6 @@ public class Localization
     /// </summary>
     /// <param name="index">索引</param>
     /// <returns>语言代码</returns>
-    [NoInit]
     public static string GetLocale(int index)
     {
         return _locales[index];
@@ -234,7 +237,6 @@ public class Localization
     /// <param name="@namespace">命名空间</param>
     /// <param name="key">条目的键值</param>
     /// </summary>
-    [NoInit]
     public static string GetText(string locale, string @namespace, string key)
     {
         if (string.IsNullOrWhiteSpace(key)) return string.Empty;
@@ -250,26 +252,23 @@ public class Localization
         return $"{@namespace}:{key}";
     }
 
-    [NoInit]
     public static List<string> GetTextAllLocales(string @namespace, string key)
         => _locales.Select(locale => GetText(locale, @namespace, key)).ToList();
 
-    [NoInit]
     public static List<string> GetAllLocales()
     {
         return _locales;
     }
 
-    [NoInit]
     public static List<string> GetAllShowNames()
         => _locales.Select(locale => _localeShowNames[locale]).ToList();
 
-    [NoInit]
     public static int LocaleCount() => _locales.Count;
 
     /// <summary>
     /// 实例化，预设语言代码和命名空间以简化调用
     /// </summary>
+    [AutoInit]
     public static LocalizationInstance CreateInstance(string locale = DefaultLocale,
         string @namespace = DefaultNamespace, bool syncGlobalLocale = true)
         => new(locale, @namespace, syncGlobalLocale);

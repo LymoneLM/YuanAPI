@@ -9,23 +9,24 @@ using System.Reflection;
 namespace YuanAPI;
 
 /// <summary>
-/// 自动Patch，所有public方法调用前先执行Initialize方法 <br/>
-/// 并确保Initialize方法只会执行一次 <br/>
-/// <param name="AutoPatchPublicMethod">启用自动Patch 默认值为true</param>
+/// 将类标记为Submodule<br/>
+/// 配合特性 <see cref="AutoInit"/> 使用，可以自动Patch方法<br/>
+/// 自动确保Initialize方法只会执行一次 <br/>
+/// <param name="UseAutoPatch">启用自动Patch 默认值为true</param>
 /// </summary>
 [MeansImplicitUse]
 [AttributeUsage(AttributeTargets.Class)]
 internal class Submodule : Attribute
 {
-    public bool AutoPatchPublicMethod = true;
+    public bool UseAutoPatch = true;
 }
 
 /// <summary>
-/// 对public method使用 <br/>
-/// 使某个被标记为Submodule的类的方法免于自动Patch <br/>
+/// 对标记为 <see cref="Submodule"/> 的类的public method使用 <br/>
+/// 使该方法执行前自动调用Initialize方法 <br/>
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-internal class NoInit : Attribute { }
+internal class AutoInit : Attribute { }
 
 internal static class SubmoduleManager
 {
@@ -44,7 +45,7 @@ internal static class SubmoduleManager
 
         var assembly = Assembly.GetExecutingAssembly();
         var submoduleTypes = assembly.GetTypes()
-            .Where(t => t.GetCustomAttribute<Submodule>()?.AutoPatchPublicMethod == true)
+            .Where(t => t.GetCustomAttribute<Submodule>()?.UseAutoPatch == true)
             .ToList();
 
         foreach (var type in submoduleTypes)
@@ -71,7 +72,7 @@ internal static class SubmoduleManager
         var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
             .Where(m => !m.IsSpecialName) // 排除属性访问器等
             .Where(m => m.DeclaringType == type)
-            .Where(m => m.GetCustomAttribute<NoInit>() == null)
+            .Where(m => m.GetCustomAttribute<AutoInit>() != null)
             .Where(m => m.Name != "Initialize")
             .ToList();
 

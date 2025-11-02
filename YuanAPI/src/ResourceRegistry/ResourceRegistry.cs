@@ -26,6 +26,7 @@ public class ResourceRegistry
     /// Registers mod resources for loading
     /// </summary>
     /// <param name="resource"></param>
+    [AutoInit]
     public static void AddResource(ResourceData resource) {
         ModResources.Add(resource);
     }
