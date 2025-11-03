@@ -15,7 +15,7 @@ public static class PropTool
     public static bool AddProp(int propId, int propCount, bool storage = true, bool silence = false)
     {
         // ID合法
-        if (propId < 0 || propId > Mainload.AllPropdata.Count)
+        if (propId < 0 || propId >= Mainload.AllPropdata.Count)
         {
             return false;
         }
