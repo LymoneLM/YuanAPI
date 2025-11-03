@@ -312,9 +312,10 @@ public class Localization
         public string t(string @namespace, string key) => GetText(Locale, @namespace, key);
         public string t(string locale, string @namespace, string key) => GetText(locale, @namespace, key);
 
-        public string Get(string key) => GetText(Locale, Namespace, key);
-        public string Get(string @namespace, string key) => GetText(Locale, @namespace, key);
-        public string Get(string locale, string @namespace, string key) => GetText(locale, @namespace, key);
+        public string t(string key, params object[] args) => t(Locale, Namespace, key, args);
+        public string t(string @namespace, string key, params object[] args) => t(Locale, @namespace, key, args);
+        public string t(string locale, string @namespace, string key, params object[] args)
+            => string.Format(GetText(locale, @namespace, key), args);
     }
 
     # endregion
