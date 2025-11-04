@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace YuanAPI;
+﻿namespace YuanAPI;
 
 public static class PropTool
 {
@@ -28,7 +26,7 @@ public static class PropTool
             {
                 if (!silence)
                     // 库房容量已满，请在府邸建造或升级库房！
-                    MsgTool.TipMsg(AllText.Text_TipShow[21][(int)Mainload.SetData[4]], TipLv.Warning);
+                    MsgTool.TipMsg(AllText.Text_TipShow[21][Mainload.SetData[4]], TipLv.Warning);
                 return false;
             }
             Mainload.FamilyData[5] = (storageLastSpace - propCount).ToString();

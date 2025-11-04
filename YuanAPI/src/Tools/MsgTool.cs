@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace YuanAPI;
+﻿namespace YuanAPI;
 
 public enum TipLv
 {
@@ -8,6 +6,7 @@ public enum TipLv
     Warning,
     ShortInfo,
 }
+
 public static class MsgTool
 {
     /// <summary>
