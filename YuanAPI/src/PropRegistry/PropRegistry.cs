@@ -86,11 +86,12 @@ public class PropRegistry
     private static void InjectMainload()
     {
         // 添加新增物品本地化字串
+        VanillaPropCount = Mainload.AllPropdata.Count;
         foreach (var prop in _allProps)
         {
             var text = Localization.GetTextAllLocales(prop.TextNamespace, prop.TextKey);
             AllText.Text_AllProp.Add(text);
-            Localization.EditText(prop.TextNamespace, prop.TextKey, text);
+            Localization.EditText(VanillaNamespace, $"Text_AllProp.{VanillaPropCount++}", text);
         }
 
         // 载入原版物品
