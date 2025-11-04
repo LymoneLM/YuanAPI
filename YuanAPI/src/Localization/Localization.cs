@@ -209,7 +209,7 @@ public class Localization
     }
 
     /// <summary>
-    /// 全量参数修改某条目，新增或覆盖
+    /// 修改某条目，新增或覆盖
     /// </summary>
     /// <param name="loc">语言代码</param>
     /// <param name="ns">命名空间</param>
@@ -218,7 +218,25 @@ public class Localization
     [AutoInit]
     public static void EditText(string loc, string ns, string key, string value)
     {
-        _store[(loc, ns, key)] = value;
+        _store[(loc, ns, key)] = value ?? string.Empty;
+    }
+
+    /// <summary>
+    /// 修改某条目所有语言，新增或覆盖 <br/>
+    /// 会按照注册顺序依次添加，传入字串小于已注册语言是安全的
+    /// </summary>
+    /// <param name="ns">命名空间</param>
+    /// <param name="key">条目的键值</param>
+    /// <param name="values">条目的内容列表</param>
+    public static void EditText(string ns, string key, List<string> values)
+    {
+        var count = values?.Count ?? 0;
+        _locales.ForEach((locale, index) =>
+        {
+            if(index >= count)
+                return;
+            EditText(locale, ns, key, values?[index]);
+        });
     }
 
     /// <summary>
@@ -347,7 +365,7 @@ public class Localization
             FlattenStringLeaves(root, flat, prefix: null);
 
             foreach (var kv in flat)
-                _store[(locale, @namespace, kv.Key)] = kv.Value;
+                EditText(locale, @namespace, kv.Key, kv.Value);
         }
         catch (JsonReaderException ex)
         {

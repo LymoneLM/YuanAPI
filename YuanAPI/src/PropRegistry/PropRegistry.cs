@@ -87,7 +87,11 @@ public class PropRegistry
     {
         // 添加新增物品本地化字串
         foreach (var prop in _allProps)
-            AllText.Text_AllProp.Add(Localization.GetTextAllLocales(prop.TextNamespace, prop.TextKey));
+        {
+            var text = Localization.GetTextAllLocales(prop.TextNamespace, prop.TextKey);
+            AllText.Text_AllProp.Add(text);
+            Localization.EditText(prop.TextNamespace, prop.TextKey, text);
+        }
 
         // 载入原版物品
         VanillaPropCount = Mainload.AllPropdata.Count;
@@ -187,7 +191,7 @@ public class PropRegistry
         public void Dispose()
         {
             if (_disposed)  return;
-            YuanLogger.LogDebug("PropRegistryInstance Dispose");
+            YuanLogger.LogDebug("PropRegistryInstance RegisterProps");
             RegisterProps(_propList);
             _disposed = true;
         }
