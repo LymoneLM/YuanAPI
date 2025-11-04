@@ -18,8 +18,6 @@ public static class MsgTool
     public static void TipMsg(string msg, TipLv lv = TipLv.Info)
     {
         if (!string.IsNullOrEmpty(msg))
-        {
-            Mainload.Tip_Show.Add([lv.GetTypeCode().ToString(), msg]);
-        }
+            Mainload.Tip_Show.Add([((int)lv).ToString(), msg]);
     }
 }
