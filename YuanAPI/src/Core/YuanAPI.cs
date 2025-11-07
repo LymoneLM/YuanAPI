@@ -12,7 +12,7 @@ public class YuanAPIPlugin : BaseUnityPlugin
 {
     public const string MODNAME = "YuanAPI";
     public const string MODGUID = "cc.lymone.HoL." + MODNAME;
-    public const string VERSION = "0.1.0";
+    public const string VERSION = "0.1.1";
 
     internal static Harmony Harmony = new Harmony(MODGUID);
 
