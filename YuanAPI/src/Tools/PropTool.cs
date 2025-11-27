@@ -1,4 +1,4 @@
-﻿namespace YuanAPI;
+﻿namespace YuanAPI.Tools;
 
 public static class PropTool
 {

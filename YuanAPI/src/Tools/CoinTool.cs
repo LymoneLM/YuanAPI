@@ -1,4 +1,4 @@
-﻿namespace YuanAPI;
+﻿namespace YuanAPI.Tools;
 
 public class CoinTool
 {
