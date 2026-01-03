@@ -4,13 +4,9 @@
 
 项目力求提供顺手且全面的工具，同时尽可能减少额外影响。
 
-## 功能计划
+## 如何使用
 
-- [ ] 
-
-## 安装使用
-
-文档暂缺，请参看源码或与我们取得联系获得支持。
+文档编辑中，请参看源码或与我们取得联系获得支持。
 
 ## 交流社区
 
@@ -24,4 +20,4 @@ feel free to join our [Discord Server](https://discord.gg/5ubSTurmBe) for discus
 
 注明引用部分遵循其[各自许可](NOTICE)使用
 
-[Copyright (C) 2025 LymoneLM](NOTICE)
+[Copyright (C) 2025 LymoneLM](LICENSE)
