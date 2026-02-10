@@ -11,5 +11,6 @@ public class SaveDataPatch
     {
         var setData = ES3.Load("SetData", "FW/SetData.es3", Mainload.SetData);
         Mainload.SetData[4] = setData[4] < Localization.LocaleCount() ? setData[4] : 0;
+        Localization.CurrentLocale = Localization.GetLocale(Mainload.SetData[4]);
     }
 }

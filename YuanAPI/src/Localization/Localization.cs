@@ -22,6 +22,16 @@ public class Localization
     private static Dictionary<string, List<string>> _searchOrders = new();
 
     public static event Action<string> OnLanguageChanged;
+    public static string CurrentLocale
+    {
+        get;
+        internal set
+        {
+            if (field == value) return;
+            field = value;
+            OnLanguageChanged?.Invoke(value);
+        }
+    } = DefaultLocale;
 
     public const string DefaultLocale  = "zh-CN";
     public const string DefaultNamespace = "Common";
@@ -339,11 +349,6 @@ public class Localization
     # endregion
 
     #region Private Methods
-
-    internal static void CallLanguageChanged(string locale)
-    {
-        OnLanguageChanged?.Invoke(locale);
-    }
 
     private static void LoadOneFile(string locale, string @namespace, string filePath)
     {

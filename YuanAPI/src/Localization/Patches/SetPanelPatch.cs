@@ -11,7 +11,7 @@ public class SetPanelPatch
     [HarmonyPatch(typeof(SetPanel), nameof(SetPanel.SetLanguage))]
     public static void SetLanguagePostFix()
     {
-        Localization.CallLanguageChanged(Localization.GetLocale(Mainload.SetData[4]));
+        Localization.CurrentLocale = Localization.GetLocale(Mainload.SetData[4]);
     }
 
     [HarmonyPostfix]
