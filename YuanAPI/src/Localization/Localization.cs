@@ -186,17 +186,13 @@ public class Localization
             var fieldName = field.Name;
             var list = (List<string>)field.GetValue(null);
 
-            if (list == null)
-                continue;
-
             list.ForEach((item, index) =>
             {
                 var parts = (item ?? string.Empty).Split('|');
 
                 _locales.ForEach((locale, langIndex) =>
                 {
-                    var value = langIndex < parts.Length ? parts[langIndex] : string.Empty;
-                    _store[(locale, VanillaNamespace, $"RandName.{fieldName}.{index}")] = value;
+                    _store[(locale, VanillaNamespace, $"RandName.{fieldName}.{index}")] = parts[langIndex];
                 });
             });
         }
@@ -220,9 +216,6 @@ public class Localization
         {
             var fieldName = field.Name;
             var originalList = (List<string>)field.GetValue(null);
-
-            if (originalList == null)
-                continue;
 
             List<string> fieldList = [];
 
