@@ -54,29 +54,23 @@ public class Localization
 
     #region Vanilla Processed
 
-    private static List<FieldInfo> _vanillaFields = [];
-    private static Dictionary<string, int> _itemCounts = new();
-
     private static void LoadFromAllText()
     {
-        _vanillaFields = typeof(AllText).GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(field => field.FieldType == typeof(List<List<string>>)).ToList();
+        var vanillaFields = typeof(AllText).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(field => field.FieldType == typeof(List<List<string>>))
+            .ToList();
 
-        if (_vanillaFields.Count == 0)
+        if (vanillaFields.Count == 0)
         {
-            YuanLogger.LogError("Localization：未能成功找到原版字段");
+            YuanLogger.LogError("Localization：未能成功找到 AllText 原版字段");
             return;
         }
 
-        var langCount = ((List<List<string>>)_vanillaFields[0].GetValue(null))[0].Count;
-        if (langCount != _locales.Count)
-            YuanLogger.LogError($"Localization：原版的本地化语言数 {langCount} 与YuanAPI定义不一致，将尝试处理已定义语言，建议升级YuanAPI");
-
-        foreach (var field in _vanillaFields)
+        foreach (var field in vanillaFields)
         {
             var fieldName = field.Name;
             var list = (List<List<string>>)field.GetValue(null);
-            _itemCounts[fieldName] = list.Count;
+
             list.ForEach((item, index) =>
             {
                 if (item.Count == 0)
@@ -94,9 +88,9 @@ public class Localization
         }
 
         // 特殊字段处理
-        // AllText.Text_AllShenFen
-        var allSenFen = AllText.Text_AllShenFen;
-        allSenFen.ForEach((group, gIndex) =>
+        // AllText.Text_AllShenFen : List<List<List<string>>>
+        var allShenFen = AllText.Text_AllShenFen;
+        allShenFen.ForEach((group, gIndex) =>
         {
             group.ForEach((item, iIndex) =>
             {
@@ -107,46 +101,72 @@ public class Localization
             });
         });
 
-        YuanLogger.LogDebug($"Localization：成功读入{_vanillaFields.Count + 1}个字段");
+        // AllText.Text_ZhuangTouShai : List<string>
+        var zhuangTouShai = AllText.Text_ZhuangTouShai;
+        if (zhuangTouShai != null)
+        {
+            _locales.ForEach((locale, langIndex) =>
+            {
+                _store[(locale, VanillaNamespace, "Text_ZhuangTouShai")] = zhuangTouShai[langIndex];
+            });
+        }
+
+        YuanLogger.LogDebug($"Localization：成功读入 AllText 的 {vanillaFields.Count + 2} 个字段");
     }
 
     private static void InjectAllText()
     {
-        if (_vanillaFields == null || _vanillaFields.Count == 0)
+        var vanillaFields = typeof(AllText).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(field => field.FieldType == typeof(List<List<string>>))
+            .ToList();
+
+        if (vanillaFields.Count == 0)
         {
-            YuanLogger.LogError("Localization：原版字段未能成功读入，拒绝注入");
+            YuanLogger.LogError("Localization：AllText 原版字段未能成功读入，拒绝注入");
             return;
         }
 
-        foreach (var field in _vanillaFields)
+        foreach (var field in vanillaFields)
         {
             var fieldName = field.Name;
-            var count = _itemCounts[fieldName];
+            var originalList = (List<List<string>>)field.GetValue(null);
+
             List<List<string>> fieldList = [];
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < originalList.Count; i++)
             {
-                fieldList.Add(_locales.Select(locale =>
-                        GetText(locale, VanillaNamespace, $"{fieldName}.{i}")).ToList());
+                fieldList.Add(_locales
+                    .Select(locale => GetText(locale, VanillaNamespace, $"{fieldName}.{i}"))
+                    .ToList());
             }
+
             field.SetValue(null, fieldList);
         }
 
         // 特殊字段处理
-        // AllText.Text_AllShenFen
-        var gCount = AllText.Text_AllShenFen.Count;
-        for (var i = 0; i < gCount; i++)
+        // AllText.Text_AllShenFen : List<List<List<string>>>
+        var originalShenFen = AllText.Text_AllShenFen;
+        var originalShenFenCount = originalShenFen.Count;
+        for (var i = 0; i < originalShenFenCount; i++)
         {
-            var iCount = AllText.Text_AllShenFen[i].Count;
             List<List<string>> itemList = [];
-            for (var j = 0; j < iCount; j++)
+            var originalGroup = originalShenFen[i];
+            var originalGroupCount = originalShenFen.Count;
+            for (var j = 0; j < originalGroupCount; j++)
             {
-                itemList.Add(_locales.Select(locale =>
-                        GetText(locale, VanillaNamespace, $"Text_AllShenFen.{i}.{j}")).ToList());
+                itemList.Add(_locales
+                    .Select(locale => GetText(locale, VanillaNamespace, $"Text_AllShenFen.{i}.{j}"))
+                    .ToList());
             }
+
             AllText.Text_AllShenFen[i] = itemList;
         }
 
-        YuanLogger.LogDebug($"Localization：成功注入{_locales.Count}种语言");
+        // AllText.Text_ZhuangTouShai : List<string>
+        AllText.Text_ZhuangTouShai = _locales
+            .Select(locale => GetText(locale, VanillaNamespace, "Text_ZhuangTouShai"))
+            .ToList();
+
+        YuanLogger.LogDebug($"Localization：成功注入 AllText 的 {_locales.Count} 种语言");
     }
 
     private static void LoadFromRandName()
