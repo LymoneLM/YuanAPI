@@ -47,7 +47,9 @@ public class Localization
         RegisterLocale("zh-CN","简体中文", []);
         RegisterLocale("en-US","English(US)", ["zh-CN"]);
         LoadFromAllText();
+        LoadFromRandName();
         YuanAPIPlugin.OnStart += InjectAllText;
+        YuanAPIPlugin.OnStart += JnjectRandName;
     }
 
     #region Vanilla Processed
@@ -146,6 +148,79 @@ public class Localization
 
         YuanLogger.LogDebug($"Localization：成功注入{_locales.Count}种语言");
     }
+
+    private static void LoadFromRandName()
+    {
+        var randNameFields = typeof(RandName).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(field => field.FieldType == typeof(List<string>))
+            .ToList();
+
+        if (randNameFields.Count == 0)
+        {
+            YuanLogger.LogError("Localization：未能成功找到 RandName 原版字段");
+            return;
+        }
+
+        foreach (var field in randNameFields)
+        {
+            var fieldName = field.Name;
+            var list = (List<string>)field.GetValue(null);
+
+            if (list == null)
+                continue;
+
+            list.ForEach((item, index) =>
+            {
+                var parts = (item ?? string.Empty).Split('|');
+
+                _locales.ForEach((locale, langIndex) =>
+                {
+                    var value = langIndex < parts.Length ? parts[langIndex] : string.Empty;
+                    _store[(locale, VanillaNamespace, $"RandName.{fieldName}.{index}")] = value;
+                });
+            });
+        }
+
+        YuanLogger.LogDebug($"Localization：成功读入 RandName 的 {randNameFields.Count} 个字段");
+    }
+
+    private static void JnjectRandName()
+    {
+        var randNameFields = typeof(RandName).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(field => field.FieldType == typeof(List<string>))
+            .ToList();
+
+        if (randNameFields.Count == 0)
+        {
+            YuanLogger.LogError("Localization：RandName 原版字段未能成功读入，拒绝注入");
+            return;
+        }
+
+        foreach (var field in randNameFields)
+        {
+            var fieldName = field.Name;
+            var originalList = (List<string>)field.GetValue(null);
+
+            if (originalList == null)
+                continue;
+
+            List<string> fieldList = [];
+
+            for (var i = 0; i < originalList.Count; i++)
+            {
+                var values = _locales
+                    .Select(locale => GetText(locale, VanillaNamespace, $"RandName.{fieldName}.{i}"))
+                    .ToList();
+
+                fieldList.Add(string.Join("|", values));
+            }
+
+            field.SetValue(null, fieldList);
+        }
+
+        YuanLogger.LogDebug($"Localization：成功注入 RandName 的 {_locales.Count} 种语言");
+    }
+
 
     #endregion
 
